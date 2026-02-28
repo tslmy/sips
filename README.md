@@ -1,10 +1,25 @@
 # Sips
 
-A chill idele game for GBA WinterJam23
+A chill idle game for GBA.
 
 ![image](https://github.com/foopod/sips/assets/3768616/04360866-c41f-438f-ad49-8c5f8ac124ec)
 
 ![image](https://github.com/foopod/sips/assets/3768616/86a4c0bd-b83e-4313-9199-fe859785978c)
+
+Originally built by [Jono Shields](https://jonoshields.com/) over WinterJam23, this fork has added the following changes:
+
+* UX
+    * If you attempt to buy something you can't afford, the cursor will shake and play a sound.
+    * The cursor will now skip already-purchased items.
+* Dev-only
+    * Adopted [Google C++ Style](https://google.github.io/styleguide/cppguide.html), automatically enforced via pre-commit hooks.
+    * Replaced vanilla `make` with `CMake` as the build system.
+    * Added unit tests. (See "Testing" below.)
+
+
+## How to play
+
+Press `A` to open wishlist. Move cursor up and down with the D pad. Press `A` again to purchase it, or press `B` to close the wishlist. With more items purchased, your cafe will be more popular (indicated by the bar gauge in the top-left corner).
 
 ## Development
 
