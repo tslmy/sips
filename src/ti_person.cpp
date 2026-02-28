@@ -67,6 +67,25 @@ bn::sprite_ptr _create_shadow(bn::fixed_point position) {
 
 namespace ti {
 
+namespace {
+constexpr const bn::sprite_item* TYPE_TO_SPRITE[] = {
+    &bn::sprite_items::walk1,   // GREEN_SHIRT = 0
+    &bn::sprite_items::walk2,   // RED_SHIRT = 1
+    &bn::sprite_items::walk3,   // BLUE_SHIRT = 2
+    &bn::sprite_items::walk4,   // RED_SINGLET = 3
+    &bn::sprite_items::walk6,   // DWIGHT = 4
+    &bn::sprite_items::walk8,   // GIRL1 = 5
+    &bn::sprite_items::walk7,   // GIRL2 = 6
+    &bn::sprite_items::walk5,   // PALE_GREEN_SHIRT = 7
+    &bn::sprite_items::walk9,   // GIRL3 = 8
+    &bn::sprite_items::walk10,  // PERSON1 = 9
+    &bn::sprite_items::walk11,  // PERSON2 = 10
+    &bn::sprite_items::walk12,  // PERSON3 = 11
+    &bn::sprite_items::walk13,  // PERSON4 = 12
+    &bn::sprite_items::walk14,  // PERSON5 = 13
+};
+}
+
 Person::Person(START start, TYPE type, int id)
     : _shadow(bn::sprite_items::shadow.create_sprite(0, 0)), _id(id) {
   LOCATIONS.push_back(bn::fixed_point(-60, 12));
@@ -111,37 +130,7 @@ Person::Person(START start, TYPE type, int id)
 
 void Person::setStyle(TYPE type, START start, bn::fixed_point pos) {
   _type = type;
-
-  if (type == TYPE::GREEN_SHIRT) {
-    _sprite_item = bn::sprite_items::walk1;
-  } else if (type == TYPE::RED_SHIRT) {
-    _sprite_item = bn::sprite_items::walk2;
-  } else if (type == TYPE::BLUE_SHIRT) {
-    _sprite_item = bn::sprite_items::walk3;
-  } else if (type == TYPE::RED_SINGLET) {
-    _sprite_item = bn::sprite_items::walk4;
-  } else if (type == TYPE::PALE_GREEN_SHIRT) {
-    _sprite_item = bn::sprite_items::walk5;
-  } else if (type == TYPE::DWIGHT) {
-    _sprite_item = bn::sprite_items::walk6;
-  } else if (type == TYPE::GIRL1) {
-    _sprite_item = bn::sprite_items::walk8;
-  } else if (type == TYPE::GIRL2) {
-    _sprite_item = bn::sprite_items::walk7;
-  } else if (type == TYPE::GIRL3) {
-    _sprite_item = bn::sprite_items::walk9;
-  } else if (type == TYPE::PERSON1) {
-    _sprite_item = bn::sprite_items::walk10;
-  } else if (type == TYPE::PERSON2) {
-    _sprite_item = bn::sprite_items::walk11;
-  } else if (type == TYPE::PERSON3) {
-    _sprite_item = bn::sprite_items::walk12;
-  } else if (type == TYPE::PERSON4) {
-    _sprite_item = bn::sprite_items::walk13;
-  } else if (type == TYPE::PERSON5) {
-    _sprite_item = bn::sprite_items::walk14;
-  }
-
+  _sprite_item = *TYPE_TO_SPRITE[static_cast<int>(type)];
   _sprite = _create_sprite(pos, start != START::RIGHT, _sprite_item.value());
   _action = bn::create_sprite_animate_action_forever(
       _sprite.value(), 12, _sprite_item.value().tiles_item(), 0, 1, 2, 3, 4, 5,
