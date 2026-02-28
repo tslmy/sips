@@ -246,17 +246,28 @@ int main() {
     if (is_menu_shown) {
       cursor.set_visible(true);
       if (bn::keypad::up_pressed()) {
+        int original_index = cursor_index;
         cursor_index = cursor_index - 1;
+        while (cursor_index >= 0 && prices.at(cursor_index) == 0) {
+          cursor_index--;
+        }
         if (cursor_index < 0) {
-          cursor_index = 0;
+          // If all above are purchased, stay at original
+          cursor_index = original_index;
         }
       }
       if (bn::keypad::down_pressed()) {
+        int original_index = cursor_index;
         cursor_index = cursor_index + 1;
+        while (cursor_index < upgrades.size() && prices.at(cursor_index) == 0) {
+          cursor_index++;
+        }
         if (cursor_index > upgrades.size() - 1) {
-          cursor_index = upgrades.size() - 1;
+          // If all below are purchased, stay at original
+          cursor_index = original_index;
         }
       }
+
       // Cursor shake effect
       if (cursor_shake_frames_remaining > 0) {
         bn::fixed_point orig_pos = get_cursor_pos(cursor_index);
