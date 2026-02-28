@@ -108,6 +108,10 @@ int main() {
       bn::sprite_items::cursor.create_sprite(get_cursor_pos(cursor_index));
   cursor.set_bg_priority(0);
 
+  // Cursor shake state
+  int cursor_shake_frames_remaining = 0;
+  int cursor_shake_direction = 1;
+
   bn::vector<bn::sprite_ptr, 16> upgrades;
   bn::vector<int, 16> prices;
   prices.push_back(30);
@@ -253,7 +257,19 @@ int main() {
           cursor_index = upgrades.size() - 1;
         }
       }
-      cursor.set_position(get_cursor_pos(cursor_index));
+      // Cursor shake effect
+      if (cursor_shake_frames_remaining > 0) {
+        bn::fixed_point orig_pos = get_cursor_pos(cursor_index);
+        cursor.set_position(bn::fixed_point(
+            orig_pos.x() + cursor_shake_direction * 2, orig_pos.y()));
+        cursor_shake_frames_remaining--;
+        cursor_shake_direction *= -1;
+        if (cursor_shake_frames_remaining == 0) {
+          cursor.set_position(orig_pos);
+        }
+      } else {
+        cursor.set_position(get_cursor_pos(cursor_index));
+      }
       if (bn::keypad::a_pressed()) {
         const int selected_price = prices.at(cursor_index);
         if (selected_price > 0 && selected_price <= cash) {
@@ -274,6 +290,10 @@ int main() {
           twinkle_action = bn::create_sprite_animate_action_once(
               twinkle, 6, bn::sprite_items::twinkle.tiles_item(), 0, 1, 2, 3, 4,
               5, 6, 7, 8, 9, 10);
+        } else if (selected_price > 0 && selected_price > cash) {
+          cursor_shake_frames_remaining = 10;
+          cursor_shake_direction = 1;
+          bn::sound_items::cancel.play(1.0);
         }
       }
     } else {
