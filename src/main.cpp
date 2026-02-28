@@ -307,6 +307,12 @@ int main() {
       if (bn::keypad::a_pressed()) {
         if (!is_menu_shown) {
           cursor_index = 0;
+          for (int i = 0; i < prices.size(); ++i) {
+            if (prices.at(i) > 0) {
+              cursor_index = i;
+              break;
+            }
+          }
           is_menu_shown = true;
           menu_background.set_visible(true);
           redraw_wishlist(text_generator, text_sprites, prices);
