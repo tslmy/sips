@@ -60,6 +60,15 @@ bn::fixed_point get_cursor_pos(int index) {
   return bn::fixed_point(12, -61 + index * 12);
 };
 
+// Return true with probability numerator/denominator using provided RNG.
+// numerator: number of successful outcomes; denominator: total outcomes.
+inline bool chance(bn::random& rng, int numerator, int denominator = 100) {
+  if (denominator <= 0) return false;
+  if (numerator <= 0) return false;
+  if (numerator >= denominator) return true;
+  return rng.get_int(denominator) < numerator;
+}
+
 void redraw_wishlist(bn::sprite_text_generator& text_generator,
                      bn::vector<bn::sprite_ptr, 60>& text_sprites,
                      bn::vector<int, 16>& prices) {
@@ -345,13 +354,13 @@ int main() {
     }
     timer = timer - 1;
     if (timer < 0) {
-      if (rng.get_int(100) > 60) {
+      if (chance(rng, 39)) {
         barista.set_item(bn::sprite_items::barista, rng.get_int(5));
       }
-      if (rng.get_int(100) > 60) {
+      if (chance(rng, 39)) {
         till.set_item(bn::sprite_items::till, rng.get_int(3));
       }
-      if (rng.get_int(100) > 92) {
+      if (chance(rng, 7)) {
         if (steamAction.done()) {
           bn::sound_items::steam.play(0.6);
           steamAction = bn::create_sprite_animate_action_once(
@@ -360,36 +369,36 @@ int main() {
           steam.set_visible(true);
         }
       }
-      if (rng.get_int(100) > 90) {
+      if (chance(rng, 9)) {
         if (drinkerAction.done()) {
           drinkerAction = bn::create_sprite_animate_action_once(
               drinker, 15, bn::sprite_items::drinker.tiles_item(), 0, 1, 2, 1,
               0);
         }
       }
-      if (rng.get_int(100) < 90) {
+      if (chance(rng, 90)) {
         talkative.set_item(bn::sprite_items::talkative, rng.get_int(4));
       }
 
       if (typistAction.done()) {
-        if (rng.get_int(100) > 80) {
+        if (chance(rng, 19)) {
           typistAction = bn::create_sprite_animate_action_forever(
               upgrades.at(8), 8, bn::sprite_items::typist.tiles_item(), 0, 1);
         }
       } else {
-        if (rng.get_int(100) > 80) {
+        if (chance(rng, 19)) {
           typistAction = bn::create_sprite_animate_action_once(
               upgrades.at(8), 8, bn::sprite_items::typist.tiles_item(), 2, 2);
         }
       }
 
-      if (rng.get_int(100) > 80) {
+      if (chance(rng, 19)) {
         if (pigeonAction.done()) {
           pigeonAction = bn::create_sprite_animate_action_once(
               pigeon, 15, bn::sprite_items::pigeon.tiles_item(), 0, 1, 0, 1, 0);
         }
       }
-      if (rng.get_int(100) < 20) {
+      if (chance(rng, 20)) {
         if (pigeon2Action.done()) {
           pigeon2Action = bn::create_sprite_animate_action_once(
               pigeon2, 15, bn::sprite_items::pigeon2.tiles_item(), 0, 1, 0, 1,
@@ -417,7 +426,7 @@ int main() {
       reflectAction1.update();
       // TODO: Update reflectAction2 animation if feature is added.
     } else {
-      if (rng.get_int(1000) > 998) {
+      if (chance(rng, 1, 1000)) {
         reflectAction1 = bn::create_sprite_animate_action_once(
             reflect1, 4, bn::sprite_items::reflect.tiles_item(), 0, 1, 2, 3, 4,
             5, 6, 7, 8, 9, 10, 11, 12, 13, 14);
