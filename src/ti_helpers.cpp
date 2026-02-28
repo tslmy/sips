@@ -6,6 +6,7 @@
 #include "ti_helpers.h"
 
 #include "bn_math.h"
+#include "bn_vector.h"
 
 namespace ti {
 

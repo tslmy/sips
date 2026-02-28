@@ -52,6 +52,7 @@
 #include "bn_sprite_text_generator.h"
 #include "bn_string.h"
 #include "ti_font.h"
+#include "ti_helpers.h"
 #include "ti_person.h"
 
 namespace {
@@ -256,26 +257,10 @@ int main() {
     if (is_menu_shown) {
       cursor.set_visible(true);
       if (bn::keypad::up_pressed()) {
-        int original_index = cursor_index;
-        cursor_index = cursor_index - 1;
-        while (cursor_index >= 0 && prices.at(cursor_index) == 0) {
-          cursor_index--;
-        }
-        if (cursor_index < 0) {
-          // If all above are purchased, stay at original
-          cursor_index = original_index;
-        }
+        cursor_index = ti::move_cursor<16>(cursor_index, -1, prices);
       }
       if (bn::keypad::down_pressed()) {
-        int original_index = cursor_index;
-        cursor_index = cursor_index + 1;
-        while (cursor_index < upgrades.size() && prices.at(cursor_index) == 0) {
-          cursor_index++;
-        }
-        if (cursor_index > upgrades.size() - 1) {
-          // If all below are purchased, stay at original
-          cursor_index = original_index;
-        }
+        cursor_index = ti::move_cursor<16>(cursor_index, +1, prices);
       }
 
       // Cursor shake effect
