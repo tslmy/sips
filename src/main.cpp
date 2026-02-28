@@ -1,3 +1,11 @@
+/**
+ * @file main.cpp
+ * @brief Game Boy Advance entry point and primary loop for the game.
+ *
+ * Sets up graphics, music, state, and contains the central per-frame loop.
+ * Most game objects, UI, and upgrades managed here.
+ */
+
 #include "bn_blending.h"
 #include "bn_core.h"
 #include "bn_deque.h"

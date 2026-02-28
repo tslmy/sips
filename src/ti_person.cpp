@@ -1,3 +1,20 @@
+/**
+ * @file ti_person.cpp
+ * @brief Implements the Person class state/behavior for customers in the jam
+ * cafe game.
+ *
+ * Contains core state machine logic, sprite animation switching, queue/ordering
+ * workflow, and all per-customer lifecycle management for the main gameplay
+ * flow.
+ *
+ * Agent/Contributor notes:
+ *   - This file is tightly coupled with the game balance and overall tempo.
+ *   - Magic numbers and queue-related quirks are a legacy from the rapid game
+ * jam build.
+ *   - If making changes, test thoroughly in-emulator, as small tweaks have
+ * game-wide effects!
+ */
+
 #include "ti_person.h"
 
 #include "bn_log.h"
@@ -19,6 +36,14 @@
 #include "bn_sprite_items_walk8.h"
 #include "bn_sprite_items_walk9.h"
 
+/**
+ * @brief Anonymous namespace: low-level helpers for sprite and movement.
+ * - _create_sprite: Utility for building person sprites with z/horizontal
+ * config.
+ * - _create_shadow: Utility for shadow sprites with blending.
+ * - _get_next_step: Returns a point moving `from` toward `to` at a given speed.
+ *   Used for pathfinding/animation fuzz, returns 'to' if close enough.
+ */
 namespace {
 bn::sprite_ptr _create_sprite(bn::fixed_point position, bool is_left,
                               bn::sprite_item sprite) {
@@ -140,6 +165,17 @@ void Person::setStyle(TYPE type, START start, bn::fixed_point pos) {
 
 TYPE Person::get_type() { return _type; }
 
+/**
+ * @brief Main state machine update for the Person (customer) object.
+ *
+ * Handles all movement, queuing, ordering, waiting, leaving logic per frame.
+ * WARNING: Core to game balance—subtle changes deeply affect flow/feel!
+ *
+ * - order_queue: Global cafe customer queue by id
+ * - waiting_spot: Reference flag for counter queue position
+ * - purchased_this_frame: Set true if this customer buys during the update
+ * - types: Pool of available style/type indices for respawning
+ */
 void Person::update(bn::deque<int, 8>& order_queue, bool& waiting_spot,
                     bool& purchased_this_frame, bn::vector<int, 16>& types) {
   if (_state == STATE::WALKING_RIGHT) {

@@ -1,3 +1,17 @@
+/**
+ * @file ti_person.h
+ * @brief Declares the Person class and types that control characters
+ * (customers) in the cafe game.
+ *
+ * STATE: Enum for character state machine (walking, ordering, etc).
+ * TYPE: Visual/style enum for sprite appearance variants.
+ * START: Enum for entry/exit position options.
+ *
+ * Person: Represents a single customer in the game, their movement, animation,
+ * and logic.
+ *
+ * Usage: Used by main game logic to simulate customer flow and interactions.
+ */
 #ifndef TI_PERSON_H
 #define TI_PERSON_H
 
@@ -12,6 +26,10 @@
 
 namespace ti {
 
+/**
+ * @brief Represents the different states a customer can be in during their
+ * lifecycle in the game.
+ */
 enum class STATE {
   WALKING_LEFT = 1,
   WALKING_LEFT_W_COFFEE = 2,
@@ -28,6 +46,9 @@ enum class STATE {
   JOINING_QUEUE = 13,
 };
 
+/**
+ * @brief Enumerates all possible character sprite styles/types.
+ */
 enum class TYPE {
   GREEN_SHIRT = 0,
   RED_SHIRT = 1,
@@ -45,11 +66,24 @@ enum class TYPE {
   PERSON5 = 13
 };
 
+/**
+ * @brief Entry locations for a Person: left side, right side, or at the
+ * counter.
+ */
 enum class START { LEFT, RIGHT, COUNTER };
+
 }  // namespace ti
 
 namespace ti {
 
+/**
+ * @class Person
+ * @brief Models a customer character, handling movement, animation, queueing,
+ * and ordering logic in the cafe.
+ *
+ * Typical usage: Instantiated by the main game loop, repeatedly updated, and
+ * rendered to the screen with a sprite and shadow.
+ */
 class Person {
  private:
   bn::optional<bn::sprite_ptr> _sprite;
@@ -66,9 +100,28 @@ class Person {
   int _id;
 
  public:
+  /**
+   * @brief Constructs a Person with the given starting location, type, and
+   * unique id.
+   * @param start Entry position (LEFT, RIGHT, COUNTER)
+   * @param type Visual/style type enum
+   * @param id Unique person id (used throughout the game's queue and logic
+   * flows)
+   */
   Person(START start, TYPE type, int id);
+
+  /**
+   * @brief Per-frame update for this character: controls position, state
+   * machine, ordering, and animation logic.
+   * @param order_queue Reference to the global queue of customer IDs
+   * @param waiting_spot Whether the alternate waiting spot is occupied
+   * @param purchased_this_frame Flag flipped when the character completes a
+   * purchase
+   * @param types List of available style types for recycling when respawning
+   */
   void update(bn::deque<int, 8>& order_queue, bool& waiting_spot,
               bool& purchased_this_frame, bn::vector<int, 16>& types);
+
   int get_id();
   TYPE get_type();
   bn::fixed_point TILL = bn::fixed_point(-66, 14);
