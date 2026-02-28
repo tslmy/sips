@@ -164,18 +164,13 @@ int main() {
   bn::sprite_ptr twinkle = bn::sprite_items::twinkle.create_sprite(-65, -7);
   twinkle.set_visible(false);
 
-  // bn::sprite_ptr swallow = bn::sprite_items::swallow.create_sprite(140, -5);
-  // bool is_left = true;
-  // bool is_paused = true;
+  // TODO: Add Swallow mascot sprite and animation as ambient character effect.
 
   bn::sprite_ptr reflect1 = bn::sprite_items::reflect.create_sprite(5, 20);
   reflect1.set_blending_enabled(true);
   reflect1.set_z_order(-500);
-  // bn::sprite_ptr reflect2 = bn::sprite_items::reflect.create_sprite(-88, -6);
-  // reflect2.set_blending_enabled(true);
-  // reflect2.set_horizontal_flip(true);
-  // reflect2.set_vertical_flip(true);
-  // reflect2.set_z_order(-500);
+  // TODO: Add second reflection visual effect (reflect2) for extra window
+  // polish.
 
   bn::sprite_ptr blocker = bn::sprite_items::blocker.create_sprite(58, 42);
   blocker.set_z_order(-40);
@@ -213,14 +208,9 @@ int main() {
           twinkle, 6, bn::sprite_items::twinkle.tiles_item(), 0, 1, 2, 3, 4, 5,
           6, 7, 8, 9, 10);
 
-  // bn::sprite_animate_action<15> reflectAction2 =
-  // bn::create_sprite_animate_action_once(
-  //                 reflect2, 4, bn::sprite_items::reflect.tiles_item(),
-  //                 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14);
+  // TODO: Implement reflectAction2 for a possible extra animation layer.
 
-  // bn::sprite_animate_action<2> swallowAction =
-  // bn::create_sprite_animate_action_forever(
-  //                 swallow, 4, bn::sprite_items::swallow.tiles_item(), 0,0);
+  // TODO: Add swallow mascot animation loop here if feature is enabled.
 
   bn::sprite_animate_action<2> typistAction =
       bn::create_sprite_animate_action_forever(
@@ -373,38 +363,14 @@ int main() {
               0);
         }
       }
-      // if(is_paused){
-      //     if(rng.get_int(100) < 10){
-      //         is_paused = false;
-      //         is_left = !is_left;
-      //         swallowAction = bn::create_sprite_animate_action_forever(
-      //             swallow, 8, bn::sprite_items::swallow.tiles_item(), 1,2);
-      //     }
-      // }
+      // TODO: Swallow mascot random jump logic (uncomment if swallow is
+      // re-enabled)
+
       timer = 30;
     }
 
-    // if(!is_paused){
-    //     if(is_left){
-    //         swallow.set_horizontal_flip(true);
-    //         swallow.set_x(swallow.x() - 0.8);
-    //         if(swallow.x() < 69){
-    //             is_paused = true;
-    //             swallow.set_x(69);
-    //             swallowAction = bn::create_sprite_animate_action_forever(
-    //                 swallow, 4, bn::sprite_items::swallow.tiles_item(), 0,0);
-    //         }
-    //     } else {
-    //         swallow.set_horizontal_flip(false);
-    //         swallow.set_x(swallow.x() + 0.8);
-    //         if(swallow.x() > 140){
-    //             is_paused = true;
-    //             swallow.set_x(140);
-    //             swallowAction = bn::create_sprite_animate_action_forever(
-    //                 swallow, 4, bn::sprite_items::swallow.tiles_item(), 0,0);
-    //         }
-    //     }
-    // }
+    // TODO: Swallow mascot movement logic (uncomment if swallow is re-enabled)
+
     if (!twinkle_action.done()) {
       twinkle_action.update();
     }
@@ -416,15 +382,13 @@ int main() {
     }
     if (!reflectAction1.done()) {
       reflectAction1.update();
-      // reflectAction2.update();
+      // TODO: Update reflectAction2 animation if feature is added.
     } else {
       if (rng.get_int(1000) > 998) {
         reflectAction1 = bn::create_sprite_animate_action_once(
             reflect1, 4, bn::sprite_items::reflect.tiles_item(), 0, 1, 2, 3, 4,
             5, 6, 7, 8, 9, 10, 11, 12, 13, 14);
-        // reflectAction2 = bn::create_sprite_animate_action_once(
-        //     reflect2, 4, bn::sprite_items::reflect.tiles_item(),
-        //     0,1,2,3,4,5,6,7,8,9,10,11,12,13,14);
+        // TODO: (Optional) Restart reflectAction2 as part of polish animation.
       }
     }
     if (!pigeonAction.done()) {
@@ -433,7 +397,7 @@ int main() {
     if (!pigeon2Action.done()) {
       pigeon2Action.update();
     }
-    // swallowAction.update();
+    // TODO: Update swallow animation if mascot feature enabled.
     sylvesterAction.update();
     if (!typistAction.done()) {
       typistAction.update();
