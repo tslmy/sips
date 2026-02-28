@@ -1,5 +1,7 @@
 # Sips
 
+[![codecov](https://codecov.io/gh/tslmy/sips/branch/main/graph/badge.svg)](https://codecov.io/gh/tslmy/sips)
+
 A chill idle game for GBA.
 
 ![image](https://github.com/foopod/sips/assets/3768616/04360866-c41f-438f-ad49-8c5f8ac124ec)
