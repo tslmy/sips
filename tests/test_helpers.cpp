@@ -5,7 +5,7 @@
 #include <cmath>  // for std::abs
 #include <vector>
 
-#include "catch2/catch.hpp"
+#include "catch_amalgamated.hpp"
 #include "cursor_helpers.h"
 
 // Minimal mocks for Butano types
