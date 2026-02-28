@@ -1,6 +1,6 @@
 repos:
-- repo: https://github.com/pocc/pre-commit-hooks # A repository providing clang-format hooks
-  rev: v1.3.5 # Use the appropriate version tag or branch
+- repo: https://github.com/pocc/pre-commit-hooks
+  rev: v1.3.5
   hooks:
     - id: clang-format
-      args: [--style=Google] # Specify a style, or use a .clang-format file in your repo
+      args: [--style=Google, -i]
