@@ -143,9 +143,10 @@ int main() {
 
   // map
   bn::regular_bg_ptr map = bn::regular_bg_items::bg1.create_bg(0, 0);
-  bn::regular_bg_ptr map2 = bn::regular_bg_items::overlay.create_bg(0, 0);
-  map2.set_priority(1);
-  map2.set_visible(false);
+  bn::regular_bg_ptr menu_background =
+      bn::regular_bg_items::overlay.create_bg(0, 0);
+  menu_background.set_priority(1);
+  menu_background.set_visible(false);
 
   // sprite
   bn::sprite_ptr title = bn::sprite_items::title.create_sprite(16, -22);
@@ -265,7 +266,7 @@ int main() {
           popularity_bar.set_item(bn::sprite_items::popularity_bar,
                                   popularity_level);
           is_menu_shown = false;
-          map2.set_visible(false);
+          menu_background.set_visible(false);
           text_sprites.clear();
           twinkle.set_position(upgrades.at(cursor_index).position());
           twinkle.set_visible(true);
@@ -281,7 +282,7 @@ int main() {
         if (!is_menu_shown) {
           cursor_index = 0;
           is_menu_shown = true;
-          map2.set_visible(true);
+          menu_background.set_visible(true);
           redraw_wishlist(text_generator, text_sprites, prices);
         }
       }
@@ -289,7 +290,7 @@ int main() {
 
     if (bn::keypad::b_pressed() && is_menu_shown) {
       is_menu_shown = false;
-      map2.set_visible(false);
+      menu_background.set_visible(false);
       text_sprites.clear();
     }
 
