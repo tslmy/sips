@@ -20,6 +20,7 @@ add_executable(test_helpers test_helpers.cpp)
 # Link Catch2 header interface target (v2.x)
 # For v2.x, manually specify include dir for single header:
 target_include_directories(test_helpers PRIVATE ${catch2_SOURCE_DIR}/single_include)
+target_include_directories(test_helpers PRIVATE ../include)
 
 # Add test to ctest
 add_test(NAME helpers COMMAND test_helpers)
