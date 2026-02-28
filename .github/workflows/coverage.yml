@@ -36,8 +36,9 @@ jobs:
       - name: Generate Coverage Report
         run: |
           cd tests/build
-          lcov --capture --directory . --output-file coverage.info
-          lcov --remove coverage.info '*/_deps/*' --output-file coverage.info
+          lcov --capture --directory . --output-file coverage.info --ignore-errors inconsistent,source,format
+          lcov --remove coverage.info '*_deps*' --output-file coverage.info --ignore-errors inconsistent,corrupt
+          lcov --summary coverage.info --ignore-errors inconsistent,corrupt
 
       - name: Upload to Codecov
         uses: codecov/codecov-action@v4
