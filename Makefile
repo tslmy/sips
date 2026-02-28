@@ -28,7 +28,7 @@
 TARGET      :=  $(notdir $(CURDIR))
 BUILD       :=  build
 LIBBUTANO   :=  ../butano/butano
-PYTHON      :=  python
+PYTHON      :=  /opt/homebrew/Caskroom/miniforge/base/bin/python3
 SOURCES     :=  src
 INCLUDES    :=  include
 DATA        :=

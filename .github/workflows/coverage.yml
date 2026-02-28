@@ -21,7 +21,7 @@ jobs:
       - name: Configure CMake with Coverage
         run: |
           cd tests
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Coverage
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Coverage -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage"
 
       - name: Build
         run: |

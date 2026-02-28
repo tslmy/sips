@@ -109,4 +109,8 @@ Temporary Items
 *.icloud
 
 # End of https://www.toptal.com/developers/gitignore/api/cmake,c++,macos,git
+
+### VS Code ###
+.vscode/
+
 tests/test_helpers
