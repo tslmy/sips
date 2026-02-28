@@ -257,10 +257,10 @@ int main() {
     if (is_menu_shown) {
       cursor.set_visible(true);
       if (bn::keypad::up_pressed()) {
-        cursor_index = ti::move_cursor<16>(cursor_index, -1, prices);
+        cursor_index = ti::move_cursor(cursor_index, -1, prices);
       }
       if (bn::keypad::down_pressed()) {
-        cursor_index = ti::move_cursor<16>(cursor_index, +1, prices);
+        cursor_index = ti::move_cursor(cursor_index, +1, prices);
       }
 
       // Cursor shake effect
