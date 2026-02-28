@@ -112,28 +112,38 @@ int main() {
   int cursor_shake_frames_remaining = 0;
   int cursor_shake_direction = 1;
 
+  struct WishlistItem {
+    int price;
+    bn::fixed_point pos;
+    const bn::sprite_item* sprite_item;
+  };
+
+  auto generate_wishlist = []() -> bn::vector<WishlistItem, 16> {
+    bn::vector<WishlistItem, 16> items;
+    items.push_back({30, bn::fixed_point(-18, -18), &bn::sprite_items::clock});
+    items.push_back({15, bn::fixed_point(-55, 9), &bn::sprite_items::cookies});
+    items.push_back({70, bn::fixed_point(-86, -23), &bn::sprite_items::bonsai});
+    items.push_back({20, bn::fixed_point(-70, -19), &bn::sprite_items::vines});
+    items.push_back({40, bn::fixed_point(112, 48), &bn::sprite_items::topiary});
+    items.push_back(
+        {55, bn::fixed_point(-53, -8), &bn::sprite_items::painting});
+    items.push_back(
+        {22, bn::fixed_point(-116, 19), &bn::sprite_items::cactus1});
+    items.push_back(
+        {100, bn::fixed_point(-12, 23), &bn::sprite_items::sylvester});
+    items.push_back({125, bn::fixed_point(-35, 42), &bn::sprite_items::typist});
+    return items;
+  };
+
+  bn::vector<WishlistItem, 16> wishlist = generate_wishlist();
   bn::vector<bn::sprite_ptr, 16> upgrades;
   bn::vector<int, 16> prices;
-  prices.push_back(30);
-  prices.push_back(15);
-  prices.push_back(70);
-  prices.push_back(20);
-  prices.push_back(40);
-  prices.push_back(55);
-  prices.push_back(22);
-  prices.push_back(100);
-  prices.push_back(125);
+  for (const WishlistItem& item : wishlist) {
+    prices.push_back(item.price);
+    upgrades.push_back(item.sprite_item->create_sprite(item.pos));
+  }
   bn::vector<bn::sprite_ptr, 8> popularity_bonuses;
 
-  upgrades.push_back(bn::sprite_items::clock.create_sprite(-18, -18));
-  upgrades.push_back(bn::sprite_items::cookies.create_sprite(-55, 9));
-  upgrades.push_back(bn::sprite_items::bonsai.create_sprite(-86, -23));
-  upgrades.push_back(bn::sprite_items::vines.create_sprite(-70, -19));
-  upgrades.push_back(bn::sprite_items::topiary.create_sprite(112, 48));
-  upgrades.push_back(bn::sprite_items::painting.create_sprite(-53, -8));
-  upgrades.push_back(bn::sprite_items::cactus1.create_sprite(-116, 19));
-  upgrades.push_back(bn::sprite_items::sylvester.create_sprite(-12, 23));
-  upgrades.push_back(bn::sprite_items::typist.create_sprite(-35, 42));
   for (bn::sprite_ptr sprite : upgrades) {
     sprite.set_visible(false);
   }
