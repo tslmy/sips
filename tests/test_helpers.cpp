@@ -31,7 +31,7 @@ inline std::pair<fixed, fixed> degrees_sin_and_cos(fixed deg) {
 }
 }  // namespace bn
 
-// ------ Copy-paste or #include the logic from your ti_helpers.cpp here:
+// ------ Actual helper logic
 namespace ti {
 bn::fixed_point get_next_step(const bn::fixed_point& from,
                               const bn::fixed_point& to, bn::fixed speed) {
@@ -49,11 +49,35 @@ bn::fixed_point get_next_step(const bn::fixed_point& from,
 }  // namespace ti
 
 // ----------- Unit Tests --------------
-TEST_CASE("get_next_step moves towards target", "[helpers]") {
-  bn::fixed_point from{0, 0};
-  bn::fixed_point to{10, 0};
-  bn::fixed speed = 1.0f;
-  auto next = ti::get_next_step(from, to, speed);
-  // Test that we move closer to 'to'
-  REQUIRE(next.x() != from.x());
+TEST_CASE("get_next_step: normal movement toward target", "[helpers]") {
+  bn::fixed_point from{10, 10};
+  bn::fixed_point to{20, 20};
+  bn::fixed speed = 3;
+  auto result = ti::get_next_step(from, to, speed);
+  // Should not snap; should move closer but not reach "to"
+  REQUIRE((std::abs(result.x() - to.x()) < std::abs(from.x() - to.x())));
+  REQUIRE((std::abs(result.y() - to.y()) < std::abs(from.y() - to.y())));
+  bool at_x = (result.x() == to.x());
+  bool at_y = (result.y() == to.y());
+  bool both_at_target = at_x && at_y;
+  REQUIRE_FALSE(both_at_target);
+}
+
+TEST_CASE("get_next_step: already at target", "[helpers]") {
+  bn::fixed_point from{20, 20};
+  bn::fixed_point to{20, 20};
+  bn::fixed speed = 3;
+  auto result = ti::get_next_step(from, to, speed);
+  REQUIRE(result.x() == 20);
+  REQUIRE(result.y() == 20);
+}
+
+TEST_CASE("get_next_step: snap to when within 2 units", "[helpers]") {
+  bn::fixed_point from{21, 20};
+  bn::fixed_point to{20, 20};
+  bn::fixed speed = 3;
+  auto result = ti::get_next_step(from, to, speed);
+  // Should snap exactly
+  REQUIRE(result.x() == 20);
+  REQUIRE(result.y() == 20);
 }
