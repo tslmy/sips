@@ -8,12 +8,16 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(Catch2 3.13.0 REQUIRED)
 
-add_executable(test_helpers test_helpers.cpp)
+add_executable(test_helpers
+    test_helpers.cpp
+    ../src/ti_helpers.cpp
+)
 
 target_link_libraries(test_helpers PRIVATE Catch2::Catch2WithMain)
 
 target_include_directories(test_helpers PRIVATE 
     ${Catch2_INCLUDE_DIRS}
+    ${CMAKE_CURRENT_SOURCE_DIR}/host_stubs
     ../include
 )
 

@@ -8,7 +8,9 @@ build:
 
 # Install dependencies (Conan)
 deps:
-    cd tests && uvx conan install . --build=missing -s build_type=RelWithDebInfo
+    cd tests && \
+    rm -rf build/RelWithDebInfo && \
+    uvx conan install . --build=missing -s build_type=RelWithDebInfo
 
 # Build test harness
 test-build:

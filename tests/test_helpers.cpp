@@ -6,6 +6,38 @@
 #include <vector>
 
 #include "cursor_helpers.h"
+#include "ti_helpers.h"
+
+TEST_CASE("get_next_step: normal movement toward target", "[helpers]") {
+  bn::fixed_point from(10, 10);
+  bn::fixed_point to(20, 20);
+  bn::fixed speed(3);
+  bn::fixed_point result = ti::get_next_step(from, to, speed);
+
+  REQUIRE(bn::abs(result.x() - to.x()) < bn::abs(from.x() - to.x()));
+  REQUIRE(bn::abs(result.y() - to.y()) < bn::abs(from.y() - to.y()));
+  REQUIRE(!(result.x() == to.x() && result.y() == to.y()));
+}
+
+TEST_CASE("get_next_step: already at target", "[helpers]") {
+  bn::fixed_point from(20, 20);
+  bn::fixed_point to(20, 20);
+  bn::fixed speed(3);
+  bn::fixed_point result = ti::get_next_step(from, to, speed);
+
+  REQUIRE(result.x() == 20);
+  REQUIRE(result.y() == 20);
+}
+
+TEST_CASE("get_next_step: snap when close", "[helpers]") {
+  bn::fixed_point from(21, 20);
+  bn::fixed_point to(20, 20);
+  bn::fixed speed(3);
+  bn::fixed_point result = ti::get_next_step(from, to, speed);
+
+  REQUIRE(result.x() == 20);
+  REQUIRE(result.y() == 20);
+}
 
 // Place this after the get_next_step tests.
 TEST_CASE("move_cursor: skips purchased items and respects bounds",

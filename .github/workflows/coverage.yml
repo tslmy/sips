@@ -26,6 +26,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd tests
+          rm -rf build/RelWithDebInfo
           conan install . --build=missing -s build_type=RelWithDebInfo
 
       - name: Configure CMake with Coverage
