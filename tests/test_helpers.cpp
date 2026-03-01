@@ -105,3 +105,47 @@ TEST_CASE("wishlist_logic purchase checks", "[wishlist][logic]") {
     REQUIRE_FALSE(wishlist::logic::can_purchase(false, 0, 999));
   }
 }
+
+TEST_CASE("wishlist_logic::attempt_purchase branches", "[wishlist][logic]") {
+  SECTION("successful purchase updates state") {
+    const auto result = wishlist::logic::attempt_purchase(false, 40, 100, 3);
+    REQUIRE(result.outcome == wishlist::logic::PurchaseOutcome::purchased);
+    REQUIRE(result.cash_after == 60);
+    REQUIRE(result.popularity_after == 4);
+    REQUIRE(result.purchased_after);
+    REQUIRE(result.should_close_menu);
+    REQUIRE_FALSE(result.should_start_cursor_shake);
+  }
+
+  SECTION("already purchased keeps state unchanged") {
+    const auto result = wishlist::logic::attempt_purchase(true, 40, 100, 3);
+    REQUIRE(result.outcome ==
+            wishlist::logic::PurchaseOutcome::already_purchased);
+    REQUIRE(result.cash_after == 100);
+    REQUIRE(result.popularity_after == 3);
+    REQUIRE(result.purchased_after);
+    REQUIRE_FALSE(result.should_close_menu);
+    REQUIRE_FALSE(result.should_start_cursor_shake);
+  }
+
+  SECTION("insufficient funds triggers shake") {
+    const auto result = wishlist::logic::attempt_purchase(false, 40, 39, 3);
+    REQUIRE(result.outcome ==
+            wishlist::logic::PurchaseOutcome::insufficient_funds);
+    REQUIRE(result.cash_after == 39);
+    REQUIRE(result.popularity_after == 3);
+    REQUIRE_FALSE(result.purchased_after);
+    REQUIRE_FALSE(result.should_close_menu);
+    REQUIRE(result.should_start_cursor_shake);
+  }
+
+  SECTION("invalid price is rejected without shake") {
+    const auto result = wishlist::logic::attempt_purchase(false, 0, 100, 3);
+    REQUIRE(result.outcome == wishlist::logic::PurchaseOutcome::invalid_price);
+    REQUIRE(result.cash_after == 100);
+    REQUIRE(result.popularity_after == 3);
+    REQUIRE_FALSE(result.purchased_after);
+    REQUIRE_FALSE(result.should_close_menu);
+    REQUIRE_FALSE(result.should_start_cursor_shake);
+  }
+}

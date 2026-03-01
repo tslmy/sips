@@ -256,27 +256,31 @@ int main() {
         if (bn::keypad::a_pressed()) {
           const bool is_purchased = purchased.at(cursor_index);
           const int base_price = wishlist::base_price(cursor_index);
-          const int selected_price =
-              wishlist::logic::selected_price(is_purchased, base_price);
+          const wishlist::logic::PurchaseAttempt purchase_attempt =
+              wishlist::logic::attempt_purchase(is_purchased, base_price, cash,
+                                                popularity_level);
 
-          if (wishlist::logic::can_purchase(is_purchased, base_price, cash)) {
-            cash = cash - selected_price;
+          if (purchase_attempt.outcome ==
+              wishlist::logic::PurchaseOutcome::purchased) {
+            cash = purchase_attempt.cash_after;
             upgrades.at(cursor_index)
                 .set_visible(!upgrades.at(cursor_index).visible());
-            purchased.at(cursor_index) = true;
+            purchased.at(cursor_index) = purchase_attempt.purchased_after;
             wishlist_menu.refresh_text(purchased);
-            popularity_level = popularity_level + 1;
+            popularity_level = purchase_attempt.popularity_after;
             popularity_bar.set_item(bn::sprite_items::popularity_bar,
                                     popularity_level);
-            is_menu_shown = false;
-            wishlist_menu.hide();
+            if (purchase_attempt.should_close_menu) {
+              is_menu_shown = false;
+              wishlist_menu.hide();
+            }
             twinkle.set_position(upgrades.at(cursor_index).position());
             twinkle.set_visible(true);
             bn::sound_items::sparkle.play(0.8);
             twinkle_action = bn::create_sprite_animate_action_once(
                 twinkle, 6, bn::sprite_items::twinkle.tiles_item(), 0, 1, 2, 3,
                 4, 5, 6, 7, 8, 9, 10);
-          } else if (selected_price > 0 && selected_price > cash) {
+          } else if (purchase_attempt.should_start_cursor_shake) {
             cursor_shake_frames_remaining = 10;
             cursor_shake_direction = 1;
             bn::sound_items::cancel.play(1.0);
