@@ -21,9 +21,9 @@ bn::fixed_point get_next_step(const bn::fixed_point& from,
 
     return bn::fixed_point(from.x() - speed * xy.second,
                            from.y() - speed * xy.first);
-  } else {
-    return to;
   }
+
+  return to;
 }
 
 }  // namespace ti
