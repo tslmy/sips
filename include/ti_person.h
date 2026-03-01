@@ -44,6 +44,7 @@ enum class STATE {
   WALKING_TO_DOOR = 11,
   EXITING = 12,
   JOINING_QUEUE = 13,
+  LOITERING = 14,
 };
 
 /**
@@ -98,6 +99,18 @@ class Person {
   STATE _state = STATE::WAITING;
   void setStyle(TYPE type, START start, bn::fixed_point pos);
   int _id;
+  bool _has_loitered = false;
+  int _loiter_time = 0;
+  int _loiter_duration_frames = 0;
+  STATE _loiter_resume_state = STATE::WALKING_RIGHT;
+  bn::fixed_point _loiter_target_position = bn::fixed_point(0, 0);
+  bool _loiter_in_position = false;
+  static int _active_loiterers;
+  static constexpr int _max_loiterers = 3;
+  bool _try_start_loitering(STATE resume_state);
+  void _begin_loitering(STATE resume_state);
+  void _stop_loitering();
+  bn::fixed_point _random_street_loiter_point(STATE resume_state);
 
  public:
   /**
