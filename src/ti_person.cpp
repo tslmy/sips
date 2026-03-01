@@ -340,6 +340,13 @@ bool Person::_advance_street_walk(const bn::fixed_point& target) {
   return next_step.x() == target.x() && next_step.y() == target.y();
 }
 
+bool Person::_advance_to(const bn::fixed_point& target) {
+  bn::fixed_point next_step =
+      ti::get_next_step(_sprite.value().position(), target, _speed);
+  _sprite.value().set_position(next_step);
+  return next_step.x() == target.x() && next_step.y() == target.y();
+}
+
 int Person::_state_index(STATE state) {
   int idx = static_cast<int>(state) - 1;
   return idx < 0 ? 0 : idx;
@@ -379,10 +386,7 @@ void Person::_handle_walking_left(bn::deque<int, 8>&, bool&, bool&,
 
 void Person::_handle_entering(bn::deque<int, 8>&, bool&, bool&,
                               bn::vector<int, 16>&) {
-  bn::fixed_point next_step =
-      ti::get_next_step(_sprite.value().position(), DOOR, _speed);
-  _sprite.value().set_position(next_step);
-  if (DOOR.x() == next_step.x() && DOOR.y() == next_step.y()) {
+  if (_advance_to(DOOR)) {
     _state = STATE::WALKING_TO_ORDER;
     _sprite.value().set_horizontal_flip(true);
   }
@@ -390,10 +394,7 @@ void Person::_handle_entering(bn::deque<int, 8>&, bool&, bool&,
 
 void Person::_handle_walking_to_order(bn::deque<int, 8>&, bool&, bool&,
                                       bn::vector<int, 16>&) {
-  bn::fixed_point next_step =
-      ti::get_next_step(_sprite.value().position(), QUEUE_START, _speed);
-  _sprite.value().set_position(next_step);
-  if (QUEUE_START.x() == next_step.x() && QUEUE_START.y() == next_step.y()) {
+  if (_advance_to(QUEUE_START)) {
     _state = STATE::JOINING_QUEUE;
   }
 }
@@ -405,8 +406,6 @@ void Person::_handle_joining_queue(bn::deque<int, 8>& order_queue,
   (void)waiting_spot;
   (void)purchased_this_frame;
   (void)types;
-  bn::fixed_point next_step =
-      ti::get_next_step(_sprite.value().position(), TILL, _speed);
   int index = locate_in_queue(order_queue, _id);
   if (index == -1) {
     if (order_queue.size() >= 5) {
@@ -416,30 +415,26 @@ void Person::_handle_joining_queue(bn::deque<int, 8>& order_queue,
     }
     order_queue.push_back(_id);
   } else {
-    next_step = ti::get_next_step(_sprite.value().position(),
-                                  LOCATIONS.at(index), _speed);
+    // keep target tied to queue slot
   }
 
-  if (_sprite.value().position().x() == next_step.x() &&
-      _sprite.value().position().y() == next_step.y()) {
+  bn::fixed_point target = index == -1 ? TILL : LOCATIONS.at(index);
+
+  if (_advance_to(target)) {
     _state = STATE::WAITING_TO_ORDER;
     _action = bn::create_sprite_animate_action_forever(
         _sprite.value(), 20, _sprite_item.value().tiles_item(), 16, 16, 16, 16,
         17, 17, 17, 17);
     _sprite.value().set_horizontal_flip(true);
   }
-
-  _sprite.value().set_position(next_step);
 }
 
 void Person::_handle_waiting_to_order(bn::deque<int, 8>& order_queue, bool&,
                                       bool&, bn::vector<int, 16>&) {
   int index = locate_in_queue(order_queue, _id);
-  bn::fixed_point next_step = ti::get_next_step(_sprite.value().position(),
-                                                LOCATIONS.at(index), _speed);
+  const bn::fixed_point target = LOCATIONS.at(index);
 
-  if (_sprite.value().position().x() == next_step.x() &&
-      _sprite.value().position().y() == next_step.y()) {
+  if (_advance_to(target)) {
     if (index == 0) {
       _state = STATE::ORDERING;
     }
@@ -451,7 +446,6 @@ void Person::_handle_waiting_to_order(bn::deque<int, 8>& order_queue, bool&,
         _sprite.value(), 12, _sprite_item.value().tiles_item(), 0, 1, 2, 3, 4,
         5, 6, 7);
   }
-  _sprite.value().set_position(next_step);
 }
 
 void Person::_handle_ordering(bn::deque<int, 8>& order_queue, bool&,
@@ -473,11 +467,7 @@ void Person::_handle_ordering(bn::deque<int, 8>& order_queue, bool&,
 void Person::_handle_walking_to_counter(bn::deque<int, 8>&, bool& waiting_spot,
                                         bool&, bn::vector<int, 16>&) {
   bn::fixed_point counter = waiting_spot ? COUNTER2 : COUNTER1;
-  bn::fixed_point next_step =
-      ti::get_next_step(_sprite.value().position(), counter, _speed);
-  _sprite.value().set_position(next_step);
-
-  if (counter.x() == next_step.x() && counter.y() == next_step.y()) {
+  if (_advance_to(counter)) {
     _state = STATE::WAITING;
     waiting_spot = !waiting_spot;
     _action = bn::create_sprite_animate_action_forever(
@@ -502,11 +492,7 @@ void Person::_handle_waiting(bn::deque<int, 8>&, bool&, bool&,
 
 void Person::_handle_walking_to_door(bn::deque<int, 8>&, bool&, bool&,
                                      bn::vector<int, 16>&) {
-  bn::fixed_point next_step =
-      ti::get_next_step(_sprite.value().position(), DOOR, _speed);
-  _sprite.value().set_position(next_step);
-
-  if (DOOR.x() == next_step.x() && DOOR.y() == next_step.y()) {
+  if (_advance_to(DOOR)) {
     _state = STATE::EXITING;
     _sprite.value().set_horizontal_flip(false);
   }
@@ -514,10 +500,7 @@ void Person::_handle_walking_to_door(bn::deque<int, 8>&, bool&, bool&,
 
 void Person::_handle_exiting(bn::deque<int, 8>&, bool&, bool&,
                              bn::vector<int, 16>&) {
-  bn::fixed_point next_step =
-      ti::get_next_step(_sprite.value().position(), OUTSIDE, _speed);
-  _sprite.value().set_position(next_step);
-  if (OUTSIDE.x() == next_step.x() && OUTSIDE.y() == next_step.y()) {
+  if (_advance_to(OUTSIDE)) {
     bool is_left = _random.get_int(10) > 5;
     if (is_left) {
       _state = STATE::WALKING_LEFT_W_COFFEE;
