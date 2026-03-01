@@ -86,6 +86,7 @@ constexpr const bn::sprite_item* TYPE_TO_SPRITE[] = {
 };
 }  // namespace
 
+// This array must match the STATE enum order exactly.
 const Person::StateHandler Person::_state_handlers[] = {
     &Person::_handle_walking_left,
     &Person::_handle_walking_left_with_coffee,
