@@ -11,51 +11,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
-      - name: Install CMake
+      - name: Install system dependencies
         uses: awalsh128/cache-apt-pkgs-action@latest
         with:
-          packages: cmake lcov
+          packages: cmake lcov just
           version: 1.0
 
-      - name: Install Conan
-        run: |
-          pip install conan
-          conan profile detect
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
 
-      - name: Install dependencies
-        run: |
-          cd tests
-          rm -rf build/RelWithDebInfo
-          conan install . --build=missing -s build_type=RelWithDebInfo
-
-      - name: Configure CMake with Coverage
-        run: |
-          cd tests
-          cmake -S . -B build/RelWithDebInfo -G "Unix Makefiles" \
-            -DCMAKE_TOOLCHAIN_FILE=build/RelWithDebInfo/generators/conan_toolchain.cmake \
-            -DCMAKE_POLICY_DEFAULT_CMP0091=NEW \
-            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-            -DCMAKE_CXX_FLAGS="--coverage" \
-            -DCMAKE_EXE_LINKER_FLAGS="--coverage"
-
-      - name: Build
-        run: |
-          cd tests
-          cmake --build build/RelWithDebInfo -j$(nproc)
-
-      - name: Run Tests
-        run: |
-          cd tests
-          ./build/RelWithDebInfo/test_helpers
-
-      - name: Generate Coverage Report
-        run: |
-          cd tests/build/RelWithDebInfo
-          lcov --capture --directory . --output-file coverage.info --ignore-errors inconsistent,source,format
-          ROOT_DIR=$(cd ../../.. && pwd)
-          lcov --extract coverage.info "$ROOT_DIR/src/*" "$ROOT_DIR/include/*" --output-file coverage.info --ignore-errors inconsistent,corrupt,format,unused
-          lcov --summary coverage.info --ignore-errors inconsistent,corrupt,format
+      - name: Run tests and coverage via just
+        run: just test
 
       - name: Upload to Codecov
         uses: codecov/codecov-action@v4
