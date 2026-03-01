@@ -33,10 +33,12 @@ const char* item_name(int index) { return item(index).name; }
 
 int item_count() { return ITEM_COUNT; }
 
-void initialize_prices(bn::vector<int, 16>& prices) {
-  prices.clear();
+int base_price(int index) { return item(index).price; }
+
+void initialize_purchased(bn::vector<bool, 16>& purchased) {
+  purchased.clear();
   for (int i = 0; i < ITEM_COUNT; ++i) {
-    prices.push_back(items[i].price);
+    purchased.push_back(false);
   }
 }
 

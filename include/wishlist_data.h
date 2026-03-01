@@ -31,8 +31,9 @@ struct ItemData {
 const ItemData& item(int index);
 const char* item_name(int index);
 int item_count();
+int base_price(int index);
 
-void initialize_prices(bn::vector<int, 16>& prices);
+void initialize_purchased(bn::vector<bool, 16>& purchased);
 void initialize_upgrades(bn::vector<bn::sprite_ptr, 16>& upgrades);
 
 }  // namespace wishlist

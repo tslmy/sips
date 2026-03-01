@@ -16,7 +16,7 @@ bn::fixed_point get_cursor_pos(int index, int menu_y) {
 
 void redraw_wishlist(bn::sprite_text_generator& text_generator,
                      bn::vector<bn::sprite_ptr, 60>& text_sprites,
-                     const bn::vector<int, 16>& prices, int menu_y) {
+                     const bn::vector<bool, 16>& purchased, int menu_y) {
   text_sprites.clear();
   text_generator.set_left_alignment();
   text_generator.generate(20, -72 + menu_y, "To Buy", text_sprites);
@@ -30,11 +30,12 @@ void redraw_wishlist(bn::sprite_text_generator& text_generator,
   text_generator.generate(112, -72 + menu_y, "$", text_sprites);
 
   for (int i = 0; i < item_count; ++i) {
-    if (prices.at(i) == 0) {
+    if (purchased.at(i)) {
       text_generator.generate(116, -60 + i * 12 + menu_y, "--", text_sprites);
     } else {
       text_generator.generate(116, -60 + i * 12 + menu_y,
-                              bn::to_string<8>(prices.at(i)), text_sprites);
+                              bn::to_string<8>(wishlist::base_price(i)),
+                              text_sprites);
     }
   }
 }
@@ -57,7 +58,7 @@ WishlistMenu::WishlistMenu(bn::sprite_text_generator& text_generator)
   cursor.set_visible(false);
 }
 
-void WishlistMenu::show(const bn::vector<int, 16>& prices, int index) {
+void WishlistMenu::show(const bn::vector<bool, 16>& purchased, int index) {
   menu_y = MENU_HIDDEN_Y;
   cursor_index = index;
   cursor_x_offset = 0;
@@ -65,7 +66,7 @@ void WishlistMenu::show(const bn::vector<int, 16>& prices, int index) {
   menu_background.set_visible(true);
   cursor.set_visible(true);
   update_cursor_position();
-  redraw_wishlist(menu_text_generator, text_sprites, prices, menu_y);
+  redraw_wishlist(menu_text_generator, text_sprites, purchased, menu_y);
   state = State::opening;
 }
 
@@ -75,7 +76,7 @@ void WishlistMenu::hide() {
   }
 }
 
-void WishlistMenu::update(const bn::vector<int, 16>& prices) {
+void WishlistMenu::update(const bn::vector<bool, 16>& purchased) {
   if (state == State::hidden || !menu_background.visible()) {
     return;
   }
@@ -87,7 +88,7 @@ void WishlistMenu::update(const bn::vector<int, 16>& prices) {
       state = State::open;
     }
     menu_background.set_y(menu_y);
-    redraw_wishlist(menu_text_generator, text_sprites, prices, menu_y);
+    redraw_wishlist(menu_text_generator, text_sprites, purchased, menu_y);
   } else if (state == State::closing) {
     menu_y -= MENU_SLIDE_SPEED;
     if (menu_y < MENU_HIDDEN_Y) {
@@ -101,7 +102,7 @@ void WishlistMenu::update(const bn::vector<int, 16>& prices) {
 
     menu_background.set_y(menu_y);
     if (state != State::hidden) {
-      redraw_wishlist(menu_text_generator, text_sprites, prices, menu_y);
+      redraw_wishlist(menu_text_generator, text_sprites, purchased, menu_y);
     }
   }
 
@@ -118,9 +119,9 @@ void WishlistMenu::set_cursor_x_offset(int x_offset) {
   update_cursor_position();
 }
 
-void WishlistMenu::refresh_text(const bn::vector<int, 16>& prices) {
+void WishlistMenu::refresh_text(const bn::vector<bool, 16>& purchased) {
   if (menu_background.visible()) {
-    redraw_wishlist(menu_text_generator, text_sprites, prices, menu_y);
+    redraw_wishlist(menu_text_generator, text_sprites, purchased, menu_y);
   }
 }
 

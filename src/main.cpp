@@ -72,9 +72,10 @@ inline void update_if_running(Action &action) {
   }
 }
 
-inline int first_available_wishlist_index(const bn::vector<int, 16> &prices) {
-  for (int i = 0; i < prices.size(); ++i) {
-    if (prices.at(i) > 0) {
+inline int first_available_wishlist_index(
+    const bn::vector<bool, 16> &purchased) {
+  for (int i = 0; i < purchased.size(); ++i) {
+    if (!purchased.at(i)) {
       return i;
     }
   }
@@ -132,8 +133,8 @@ int main() {
   int cursor_shake_direction = 1;
 
   bn::vector<bn::sprite_ptr, 16> upgrades;
-  bn::vector<int, 16> prices;
-  wishlist::initialize_prices(prices);
+  bn::vector<bool, 16> purchased;
+  wishlist::initialize_purchased(purchased);
   wishlist::initialize_upgrades(upgrades);
   bn::vector<bn::sprite_ptr, 8> popularity_bonuses;
 
@@ -237,17 +238,17 @@ int main() {
   initialize_people(people);
 
   while (true) {
-    wishlist_menu.update(prices);
+    wishlist_menu.update(purchased);
 
     if (is_menu_shown) {
       wishlist_menu.set_cursor_index(cursor_index);
 
       if (wishlist_menu.fully_open()) {
         if (bn::keypad::up_pressed()) {
-          cursor_index = ti::move_cursor(cursor_index, -1, prices);
+          cursor_index = ti::move_cursor_available(cursor_index, -1, purchased);
         }
         if (bn::keypad::down_pressed()) {
-          cursor_index = ti::move_cursor(cursor_index, +1, prices);
+          cursor_index = ti::move_cursor_available(cursor_index, +1, purchased);
         }
 
         // Cursor shake effect
@@ -263,13 +264,15 @@ int main() {
         }
 
         if (bn::keypad::a_pressed()) {
-          const int selected_price = prices.at(cursor_index);
+          const bool is_purchased = purchased.at(cursor_index);
+          const int selected_price =
+              is_purchased ? 0 : wishlist::base_price(cursor_index);
           if (selected_price > 0 && selected_price <= cash) {
             cash = cash - selected_price;
             upgrades.at(cursor_index)
                 .set_visible(!upgrades.at(cursor_index).visible());
-            prices.at(cursor_index) = 0;
-            wishlist_menu.refresh_text(prices);
+            purchased.at(cursor_index) = true;
+            wishlist_menu.refresh_text(purchased);
             popularity_level = popularity_level + 1;
             popularity_bar.set_item(bn::sprite_items::popularity_bar,
                                     popularity_level);
@@ -291,9 +294,9 @@ int main() {
     } else {
       if (bn::keypad::a_pressed()) {
         if (!is_menu_shown && wishlist_menu.hidden()) {
-          cursor_index = first_available_wishlist_index(prices);
+          cursor_index = first_available_wishlist_index(purchased);
           is_menu_shown = true;
-          wishlist_menu.show(prices, cursor_index);
+          wishlist_menu.show(purchased, cursor_index);
         }
       }
     }
