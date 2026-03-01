@@ -18,15 +18,29 @@ jobs:
           packages: cmake lcov
           version: 1.0
 
+      - name: Install Conan
+        run: pip install conan
+
+      - name: Install dependencies
+        run: |
+          cd tests
+          conan install . --build=missing
+
       - name: Configure CMake with Coverage
         run: |
           cd tests
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Coverage -DCMAKE_CXX_FLAGS="--coverage" -DCMAKE_EXE_LINKER_FLAGS="--coverage"
+          mkdir -p build && cd build
+          cmake .. -G "Unix Makefiles" \
+            -DCMAKE_TOOLCHAIN_FILE=../build/Release/generators/conan_toolchain.cmake \
+            -DCMAKE_POLICY_DEFAULT_CMP0091=NEW \
+            -DCMAKE_BUILD_TYPE=Coverage \
+            -DCMAKE_CXX_FLAGS="--coverage" \
+            -DCMAKE_EXE_LINKER_FLAGS="--coverage"
 
       - name: Build
         run: |
-          cd tests
-          cmake --build build
+          cd tests/build
+          cmake --build . -j$(nproc)
 
       - name: Run Tests
         run: |

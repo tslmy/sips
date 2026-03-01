@@ -3,8 +3,6 @@ project(SipsHelpersTest LANGUAGES CXX)
 
 enable_testing()
 
-include(${CMAKE_SOURCE_DIR}/build/Release/generators/conan_toolchain.cmake)
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
