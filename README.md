@@ -1,6 +1,6 @@
 # Sips
 
-[![codecov](https://codecov.io/gh/tslmy/sips/branch/main/graph/badge.svg)](https://codecov.io/gh/tslmy/sips)
+[![codecov](https://codecov.io/gh/tslmy/sips/branch/main/graph/badge.svg)][cc]
 
 A chill idle game for GBA.
 
@@ -46,4 +46,9 @@ Ensure you have these commands installed: `just`, `uv`. On macOS, just run `brew
 
 Run `just test` to build and run tests.
 
-See `justfile` for the full commands.
+**WIP: Code coverage.** I'm still trying to figure out how to make code coverage accurate.
+
+* [The report][cc] is missing `main.cpp`.
+* `.github/workflows/coverage.yml` should use `just test` instead of duplicating the commands.
+
+[cc]: https://app.codecov.io/gh/tslmy/sips
