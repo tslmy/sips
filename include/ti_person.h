@@ -121,7 +121,7 @@ class Person {
   static const StateHandler _state_handlers[];
   static int _state_index(STATE state);
   friend constexpr bool _ti_verify_state_handler_table();
-  bool _advance_street_walk(const bn::fixed_point &target);
+  bool _advance_to(const bn::fixed_point &target, bool may_loiter = false);
   void _respawn_from_side(START start_side, STATE next_state, bool face_left,
                           bn::vector<int, 16> &types);
 

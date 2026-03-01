@@ -330,20 +330,13 @@ bool Person::_update_loiter_overlay() {
   return _is_loitering;
 }
 
-bool Person::_advance_street_walk(const bn::fixed_point& target) {
+bool Person::_advance_to(const bn::fixed_point& target, bool may_loiter) {
   bn::fixed_point next_step =
       ti::get_next_step(_sprite.value().position(), target, _speed);
   _sprite.value().set_position(next_step);
-  if (_try_start_loitering()) {
+  if (may_loiter && _try_start_loitering()) {
     return false;
   }
-  return next_step.x() == target.x() && next_step.y() == target.y();
-}
-
-bool Person::_advance_to(const bn::fixed_point& target) {
-  bn::fixed_point next_step =
-      ti::get_next_step(_sprite.value().position(), target, _speed);
-  _sprite.value().set_position(next_step);
   return next_step.x() == target.x() && next_step.y() == target.y();
 }
 
@@ -354,7 +347,7 @@ int Person::_state_index(STATE state) {
 
 void Person::_handle_walking_right(bn::deque<int, 8>&, bool&, bool&,
                                    bn::vector<int, 16>&) {
-  if (_advance_street_walk(OUTSIDE)) {
+  if (_advance_to(OUTSIDE, true)) {
     if (_should_walk_by()) {
       _state = STATE::WALKING_RIGHT_PASSER;
       _sprite.value().set_horizontal_flip(false);
@@ -370,7 +363,7 @@ void Person::_handle_walking_right(bn::deque<int, 8>&, bool&, bool&,
 
 void Person::_handle_walking_left(bn::deque<int, 8>&, bool&, bool&,
                                   bn::vector<int, 16>&) {
-  if (_advance_street_walk(OUTSIDE)) {
+  if (_advance_to(OUTSIDE, true)) {
     if (_should_walk_by()) {
       _state = STATE::WALKING_LEFT_PASSER;
       _sprite.value().set_horizontal_flip(true);
@@ -515,7 +508,7 @@ void Person::_handle_exiting(bn::deque<int, 8>&, bool&, bool&,
 
 void Person::_handle_walking_right_passer(bn::deque<int, 8>&, bool&, bool&,
                                           bn::vector<int, 16>&) {
-  if (_advance_street_walk(RIGHT)) {
+  if (_advance_to(RIGHT, true)) {
     _state = STATE::WALKING_LEFT;
     _sprite.value().set_horizontal_flip(true);
   }
@@ -523,7 +516,7 @@ void Person::_handle_walking_right_passer(bn::deque<int, 8>&, bool&, bool&,
 
 void Person::_handle_walking_left_passer(bn::deque<int, 8>&, bool&, bool&,
                                          bn::vector<int, 16>&) {
-  if (_advance_street_walk(LEFT)) {
+  if (_advance_to(LEFT, true)) {
     _state = STATE::WALKING_RIGHT;
     _sprite.value().set_horizontal_flip(false);
   }
@@ -531,14 +524,14 @@ void Person::_handle_walking_left_passer(bn::deque<int, 8>&, bool&, bool&,
 
 void Person::_handle_walking_left_with_coffee(bn::deque<int, 8>&, bool&, bool&,
                                               bn::vector<int, 16>& types) {
-  if (_advance_street_walk(LEFT)) {
+  if (_advance_to(LEFT, true)) {
     _respawn_from_side(START::LEFT, STATE::WALKING_RIGHT, false, types);
   }
 }
 
 void Person::_handle_walking_right_with_coffee(bn::deque<int, 8>&, bool&, bool&,
                                                bn::vector<int, 16>& types) {
-  if (_advance_street_walk(RIGHT)) {
+  if (_advance_to(RIGHT, true)) {
     _respawn_from_side(START::RIGHT, STATE::WALKING_LEFT, true, types);
   }
 }
