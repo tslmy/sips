@@ -26,9 +26,7 @@ class WishlistMenu {
   static int move_cursor_available(int current_index, int delta,
                                    const bn::vector<bool, 16>& purchased);
 
-  [[nodiscard]] bool fully_open() const;
-  [[nodiscard]] bool hidden() const;
-  [[nodiscard]] State current_state() const;
+  [[nodiscard]] bool is_focused() const;
   [[nodiscard]] int cursor_index_value() const;
 
  private:

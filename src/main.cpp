@@ -225,74 +225,70 @@ int main() {
 
   while (true) {
     wishlist_menu.update(purchased);
-    const WishlistMenu::State menu_state = wishlist_menu.current_state();
 
-    if (menu_state != WishlistMenu::State::hidden) {
-      if (menu_state == WishlistMenu::State::open ||
-          menu_state == WishlistMenu::State::opening) {
-        if (bn::keypad::up_pressed()) {
-          wishlist_menu.move_cursor(-1, purchased);
-        }
-        if (bn::keypad::down_pressed()) {
-          wishlist_menu.move_cursor(+1, purchased);
-        }
+    if (wishlist_menu.is_focused()) {
+      if (bn::keypad::up_pressed()) {
+        wishlist_menu.move_cursor(-1, purchased);
+      }
+      if (bn::keypad::down_pressed()) {
+        wishlist_menu.move_cursor(+1, purchased);
+      }
 
-        const int cursor_index = wishlist_menu.cursor_index_value();
+      const int cursor_index = wishlist_menu.cursor_index_value();
 
-        // Cursor shake effect
-        if (cursor_shake_frames_remaining > 0) {
-          wishlist_menu.set_cursor_x_offset(cursor_shake_direction * 2);
-          cursor_shake_frames_remaining--;
-          cursor_shake_direction *= -1;
-          if (cursor_shake_frames_remaining == 0) {
-            wishlist_menu.set_cursor_x_offset(0);
-          }
-        } else {
+      // Cursor shake effect
+      if (cursor_shake_frames_remaining > 0) {
+        wishlist_menu.set_cursor_x_offset(cursor_shake_direction * 2);
+        cursor_shake_frames_remaining--;
+        cursor_shake_direction *= -1;
+        if (cursor_shake_frames_remaining == 0) {
           wishlist_menu.set_cursor_x_offset(0);
         }
-
-        if (bn::keypad::a_pressed() && cursor_index >= 0) {
-          const bool is_purchased = purchased.at(cursor_index);
-          const int base_price = wishlist::base_price(cursor_index);
-          const wishlist::logic::PurchaseAttempt purchase_attempt =
-              wishlist::logic::attempt_purchase(is_purchased, base_price, cash,
-                                                popularity_level);
-
-          if (purchase_attempt.outcome ==
-              wishlist::logic::PurchaseOutcome::purchased) {
-            cash = purchase_attempt.cash_after;
-            upgrades.at(cursor_index)
-                .set_visible(!upgrades.at(cursor_index).visible());
-            purchased.at(cursor_index) = purchase_attempt.purchased_after;
-            wishlist_menu.refresh_text(purchased);
-            popularity_level = purchase_attempt.popularity_after;
-            popularity_bar.set_item(bn::sprite_items::popularity_bar,
-                                    popularity_level);
-            if (purchase_attempt.should_close_menu) {
-              wishlist_menu.hide();
-            }
-            twinkle.set_position(upgrades.at(cursor_index).position());
-            twinkle.set_visible(true);
-            bn::sound_items::sparkle.play(0.8);
-            twinkle_action = bn::create_sprite_animate_action_once(
-                twinkle, 6, bn::sprite_items::twinkle.tiles_item(), 0, 1, 2, 3,
-                4, 5, 6, 7, 8, 9, 10);
-          } else if (purchase_attempt.should_start_cursor_shake) {
-            cursor_shake_frames_remaining = 10;
-            cursor_shake_direction = 1;
-            bn::sound_items::cancel.play(1.0);
-          }
-        }
+      } else {
+        wishlist_menu.set_cursor_x_offset(0);
       }
-    } else {
-      if (bn::keypad::a_pressed()) {
-        if (wishlist_menu.hidden()) {
-          wishlist_menu.show(purchased);
+
+      if (bn::keypad::a_pressed() && cursor_index >= 0) {
+        const bool is_purchased = purchased.at(cursor_index);
+        const int base_price = wishlist::base_price(cursor_index);
+        const wishlist::logic::PurchaseAttempt purchase_attempt =
+            wishlist::logic::attempt_purchase(is_purchased, base_price, cash,
+                                              popularity_level);
+
+        if (purchase_attempt.outcome ==
+            wishlist::logic::PurchaseOutcome::purchased) {
+          cash = purchase_attempt.cash_after;
+          upgrades.at(cursor_index)
+              .set_visible(!upgrades.at(cursor_index).visible());
+          purchased.at(cursor_index) = purchase_attempt.purchased_after;
+          wishlist_menu.refresh_text(purchased);
+          popularity_level = purchase_attempt.popularity_after;
+          popularity_bar.set_item(bn::sprite_items::popularity_bar,
+                                  popularity_level);
+          if (purchase_attempt.should_close_menu) {
+            wishlist_menu.hide();
+          }
+          twinkle.set_position(upgrades.at(cursor_index).position());
+          twinkle.set_visible(true);
+          bn::sound_items::sparkle.play(0.8);
+          twinkle_action = bn::create_sprite_animate_action_once(
+              twinkle, 6, bn::sprite_items::twinkle.tiles_item(), 0, 1, 2, 3, 4,
+              5, 6, 7, 8, 9, 10);
+        } else if (purchase_attempt.should_start_cursor_shake) {
+          cursor_shake_frames_remaining = 10;
+          cursor_shake_direction = 1;
+          bn::sound_items::cancel.play(1.0);
         }
       }
     }
 
-    if (bn::keypad::b_pressed() && menu_state != WishlistMenu::State::hidden) {
+    else {
+      if (bn::keypad::a_pressed()) {
+        wishlist_menu.show(purchased);
+      }
+    }
+
+    if (bn::keypad::b_pressed()) {
       wishlist_menu.hide();
     }
 

@@ -136,11 +136,9 @@ void WishlistMenu::refresh_text(const bn::vector<bool, 16>& purchased) {
   }
 }
 
-bool WishlistMenu::fully_open() const { return state == State::open; }
-
-bool WishlistMenu::hidden() const { return state == State::hidden; }
-
-WishlistMenu::State WishlistMenu::current_state() const { return state; }
+bool WishlistMenu::is_focused() const {
+  return state == State::open || state == State::opening;
+}
 
 int WishlistMenu::cursor_index_value() const { return cursor_index; }
 
