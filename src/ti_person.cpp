@@ -84,7 +84,13 @@ constexpr const bn::sprite_item* TYPE_TO_SPRITE[] = {
     &bn::sprite_items::walk13,  // PERSON4 = 12
     &bn::sprite_items::walk14,  // PERSON5 = 13
 };
+int locate_in_queue(const bn::deque<int, 8>& order_queue, int id) {
+  for (int i = 0; i < order_queue.size(); ++i) {
+    if (order_queue.at(i) == id) return i;
+  }
+  return -1;
 }
+}  // namespace
 
 int Person::_active_loiterers = 0;
 
@@ -296,12 +302,7 @@ void Person::update(bn::deque<int, 8>& order_queue, bool& waiting_spot,
         ti::get_next_step(_sprite.value().position(), TILL, _speed);
 
     // check if in queue
-    int index = -1;
-    for (int i = 0; i < order_queue.size(); i++) {
-      if (order_queue.at(i) == _id) {
-        index = i;
-      }
-    }
+    int index = locate_in_queue(order_queue, _id);
 
     if (index == -1) {
       if (order_queue.size() >= 5) {
@@ -331,12 +332,7 @@ void Person::update(bn::deque<int, 8>& order_queue, bool& waiting_spot,
     _sprite.value().set_position(next_step);
   } else if (_state == STATE::WAITING_TO_ORDER) {
     // get position in queue
-    int index = -1;
-    for (int i = 0; i < order_queue.size(); i++) {
-      if (order_queue.at(i) == _id) {
-        index = i;
-      }
-    }
+    int index = locate_in_queue(order_queue, _id);
 
     // try to move up
     bn::fixed_point next_step = ti::get_next_step(_sprite.value().position(),
