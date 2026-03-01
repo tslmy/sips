@@ -330,6 +330,16 @@ bool Person::_update_loiter_overlay() {
   return _is_loitering;
 }
 
+bool Person::_advance_street_walk(const bn::fixed_point& target) {
+  bn::fixed_point next_step =
+      ti::get_next_step(_sprite.value().position(), target, _speed);
+  _sprite.value().set_position(next_step);
+  if (_try_start_loitering()) {
+    return false;
+  }
+  return next_step.x() == target.x() && next_step.y() == target.y();
+}
+
 int Person::_state_index(STATE state) {
   int idx = static_cast<int>(state) - 1;
   return idx < 0 ? 0 : idx;
@@ -337,12 +347,7 @@ int Person::_state_index(STATE state) {
 
 void Person::_handle_walking_right(bn::deque<int, 8>&, bool&, bool&,
                                    bn::vector<int, 16>&) {
-  bn::fixed_point next_step =
-      ti::get_next_step(_sprite.value().position(), OUTSIDE, _speed);
-  _sprite.value().set_position(next_step);
-  bool started_loitering = _try_start_loitering();
-  if (!started_loitering && OUTSIDE.x() == next_step.x() &&
-      OUTSIDE.y() == next_step.y()) {
+  if (_advance_street_walk(OUTSIDE)) {
     if (_should_walk_by()) {
       _state = STATE::WALKING_RIGHT_PASSER;
       _sprite.value().set_horizontal_flip(false);
@@ -358,12 +363,7 @@ void Person::_handle_walking_right(bn::deque<int, 8>&, bool&, bool&,
 
 void Person::_handle_walking_left(bn::deque<int, 8>&, bool&, bool&,
                                   bn::vector<int, 16>&) {
-  bn::fixed_point next_step =
-      ti::get_next_step(_sprite.value().position(), OUTSIDE, _speed);
-  _sprite.value().set_position(next_step);
-  bool started_loitering = _try_start_loitering();
-  if (!started_loitering && OUTSIDE.x() == next_step.x() &&
-      OUTSIDE.y() == next_step.y()) {
+  if (_advance_street_walk(OUTSIDE)) {
     if (_should_walk_by()) {
       _state = STATE::WALKING_LEFT_PASSER;
       _sprite.value().set_horizontal_flip(true);
@@ -532,12 +532,7 @@ void Person::_handle_exiting(bn::deque<int, 8>&, bool&, bool&,
 
 void Person::_handle_walking_right_passer(bn::deque<int, 8>&, bool&, bool&,
                                           bn::vector<int, 16>&) {
-  bn::fixed_point next_step =
-      ti::get_next_step(_sprite.value().position(), RIGHT, _speed);
-  _sprite.value().set_position(next_step);
-  bool started_loitering = _try_start_loitering();
-  if (!started_loitering && RIGHT.x() == next_step.x() &&
-      RIGHT.y() == next_step.y()) {
+  if (_advance_street_walk(RIGHT)) {
     _state = STATE::WALKING_LEFT;
     _sprite.value().set_horizontal_flip(true);
   }
@@ -545,12 +540,7 @@ void Person::_handle_walking_right_passer(bn::deque<int, 8>&, bool&, bool&,
 
 void Person::_handle_walking_left_passer(bn::deque<int, 8>&, bool&, bool&,
                                          bn::vector<int, 16>&) {
-  bn::fixed_point next_step =
-      ti::get_next_step(_sprite.value().position(), LEFT, _speed);
-  _sprite.value().set_position(next_step);
-  bool started_loitering = _try_start_loitering();
-  if (!started_loitering && LEFT.x() == next_step.x() &&
-      LEFT.y() == next_step.y()) {
+  if (_advance_street_walk(LEFT)) {
     _state = STATE::WALKING_RIGHT;
     _sprite.value().set_horizontal_flip(false);
   }
@@ -558,13 +548,7 @@ void Person::_handle_walking_left_passer(bn::deque<int, 8>&, bool&, bool&,
 
 void Person::_handle_walking_left_with_coffee(bn::deque<int, 8>&, bool&, bool&,
                                               bn::vector<int, 16>& types) {
-  bn::fixed_point next_step =
-      ti::get_next_step(_sprite.value().position(), LEFT, _speed);
-  _sprite.value().set_position(next_step);
-  bool started_loitering = _try_start_loitering();
-
-  if (!started_loitering && LEFT.x() == next_step.x() &&
-      LEFT.y() == next_step.y()) {
+  if (_advance_street_walk(LEFT)) {
     _state = STATE::WALKING_RIGHT;
     int type_index = _random.get_int(types.size());
     int next_type = types.at(type_index);
@@ -577,13 +561,7 @@ void Person::_handle_walking_left_with_coffee(bn::deque<int, 8>&, bool&, bool&,
 
 void Person::_handle_walking_right_with_coffee(bn::deque<int, 8>&, bool&, bool&,
                                                bn::vector<int, 16>& types) {
-  bn::fixed_point next_step =
-      ti::get_next_step(_sprite.value().position(), RIGHT, _speed);
-  _sprite.value().set_position(next_step);
-  bool started_loitering = _try_start_loitering();
-
-  if (!started_loitering && RIGHT.x() == next_step.x() &&
-      RIGHT.y() == next_step.y()) {
+  if (_advance_street_walk(RIGHT)) {
     _state = STATE::WALKING_LEFT;
     int type_index = _random.get_int(types.size());
     int next_type = types.at(type_index);
