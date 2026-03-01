@@ -316,11 +316,7 @@ bool Person::_update_loiter_overlay() {
       _stop_loitering();
     }
   } else {
-    bn::fixed_point next_step = ti::get_next_step(
-        _sprite.value().position(), _loiter_target_position, _speed);
-    _sprite.value().set_position(next_step);
-    if (next_step.x() == _loiter_target_position.x() &&
-        next_step.y() == _loiter_target_position.y()) {
+    if (_advance_to(_loiter_target_position, false)) {
       _loiter_in_position = true;
       _action = bn::create_sprite_animate_action_forever(
           _sprite.value(), 20, _sprite_item.value().tiles_item(), 16, 16, 16,
