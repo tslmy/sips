@@ -114,8 +114,6 @@ int main() {
       bn::sprite_items::popularity_bar.create_sprite(-79, -73,
                                                      popularity_level);
 
-  int is_menu_shown = false;
-
   // Cursor shake state
   int cursor_shake_frames_remaining = 0;
   int cursor_shake_direction = 1;
@@ -227,9 +225,11 @@ int main() {
 
   while (true) {
     wishlist_menu.update(purchased);
+    const WishlistMenu::State menu_state = wishlist_menu.current_state();
 
-    if (is_menu_shown) {
-      if (wishlist_menu.fully_open()) {
+    if (menu_state != WishlistMenu::State::hidden) {
+      if (menu_state == WishlistMenu::State::open ||
+          menu_state == WishlistMenu::State::opening) {
         if (bn::keypad::up_pressed()) {
           wishlist_menu.move_cursor(-1, purchased);
         }
@@ -269,7 +269,6 @@ int main() {
             popularity_bar.set_item(bn::sprite_items::popularity_bar,
                                     popularity_level);
             if (purchase_attempt.should_close_menu) {
-              is_menu_shown = false;
               wishlist_menu.hide();
             }
             twinkle.set_position(upgrades.at(cursor_index).position());
@@ -287,15 +286,13 @@ int main() {
       }
     } else {
       if (bn::keypad::a_pressed()) {
-        if (!is_menu_shown && wishlist_menu.hidden()) {
-          is_menu_shown = true;
+        if (wishlist_menu.hidden()) {
           wishlist_menu.show(purchased);
         }
       }
     }
 
-    if (bn::keypad::b_pressed() && is_menu_shown) {
-      is_menu_shown = false;
+    if (bn::keypad::b_pressed() && menu_state != WishlistMenu::State::hidden) {
       wishlist_menu.hide();
     }
 

@@ -28,6 +28,7 @@ class WishlistMenu {
 
   [[nodiscard]] bool fully_open() const;
   [[nodiscard]] bool hidden() const;
+  [[nodiscard]] State current_state() const;
   [[nodiscard]] int cursor_index_value() const;
 
  private:

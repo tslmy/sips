@@ -140,6 +140,8 @@ bool WishlistMenu::fully_open() const { return state == State::open; }
 
 bool WishlistMenu::hidden() const { return state == State::hidden; }
 
+WishlistMenu::State WishlistMenu::current_state() const { return state; }
+
 int WishlistMenu::cursor_index_value() const { return cursor_index; }
 
 // This is kept as a separate function to allow unit testing in the future.
