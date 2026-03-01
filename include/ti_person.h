@@ -196,7 +196,7 @@ class Person {
               bool &purchased_this_frame, bn::vector<int, 16> &types);
 
   int get_id();
-  TYPE get_type();
+  TYPE get_type() const;
   bn::fixed_point TILL = bn::fixed_point(-66, 14);
   bn::fixed_point COUNTER1 = bn::fixed_point(-100, 16);
   bn::fixed_point COUNTER2 = bn::fixed_point(-86, 14);

@@ -137,7 +137,7 @@ Person::Person(START start, TYPE type, int id)
 
   bn::random rng = bn::random();
   for (int i = 0; i < _id; i++) {
-    rng.get();
+    (void)rng.get();
   }
   _speed += rng.get_fixed(0.2) - 0.1;
 
@@ -188,7 +188,7 @@ void Person::setStyle(TYPE type, START start, bn::fixed_point pos) {
       6, 7);
 }
 
-TYPE Person::get_type() { return _type; }
+TYPE Person::get_type() const { return _type; }
 
 bn::fixed_point Person::_random_street_loiter_point() {
   bn::fixed_point current_pos = _sprite.value().position();
@@ -440,7 +440,7 @@ void Person::_handle_waiting_to_order(bn::deque<int, 8>& order_queue, bool&,
 void Person::_handle_ordering(bn::deque<int, 8>& order_queue, bool&,
                               bool& purchased_this_frame,
                               bn::vector<int, 16>&) {
-  _wait_time = _wait_time += 1;
+  _wait_time += 1;
   if (_wait_time > _wait_max) {
     purchased_this_frame = true;
     _wait_time = 0;
@@ -468,7 +468,7 @@ void Person::_handle_walking_to_counter(bn::deque<int, 8>&, bool& waiting_spot,
 
 void Person::_handle_waiting(bn::deque<int, 8>&, bool&, bool&,
                              bn::vector<int, 16>&) {
-  _wait_time = _wait_time += 1;
+  _wait_time += 1;
   if (_wait_time > _wait_max + 60) {
     _wait_time = 0;
     _state = STATE::WALKING_TO_DOOR;
