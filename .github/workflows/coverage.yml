@@ -19,7 +19,9 @@ jobs:
           version: 1.0
 
       - name: Install Conan
-        run: pip install conan
+        run: |
+          pip install conan
+          conan profile detect
 
       - name: Install dependencies
         run: |
