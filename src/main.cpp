@@ -53,6 +53,7 @@
 #include "ti_helpers.h"
 #include "ti_person.h"
 #include "wishlist_data.h"
+#include "wishlist_logic.h"
 #include "wishlist_menu.h"
 
 namespace {
@@ -70,17 +71,6 @@ inline void update_if_running(Action &action) {
   if (!action.done()) {
     action.update();
   }
-}
-
-inline int first_available_wishlist_index(
-    const bn::vector<bool, 16> &purchased) {
-  for (int i = 0; i < purchased.size(); ++i) {
-    if (!purchased.at(i)) {
-      return i;
-    }
-  }
-
-  return 0;
 }
 
 void initialize_people(bn::vector<ti::Person, 16> &people) {
@@ -265,9 +255,11 @@ int main() {
 
         if (bn::keypad::a_pressed()) {
           const bool is_purchased = purchased.at(cursor_index);
+          const int base_price = wishlist::base_price(cursor_index);
           const int selected_price =
-              is_purchased ? 0 : wishlist::base_price(cursor_index);
-          if (selected_price > 0 && selected_price <= cash) {
+              wishlist::logic::selected_price(is_purchased, base_price);
+
+          if (wishlist::logic::can_purchase(is_purchased, base_price, cash)) {
             cash = cash - selected_price;
             upgrades.at(cursor_index)
                 .set_visible(!upgrades.at(cursor_index).visible());
@@ -294,7 +286,7 @@ int main() {
     } else {
       if (bn::keypad::a_pressed()) {
         if (!is_menu_shown && wishlist_menu.hidden()) {
-          cursor_index = first_available_wishlist_index(purchased);
+          cursor_index = wishlist::logic::first_unpurchased_index(purchased);
           is_menu_shown = true;
           wishlist_menu.show(purchased, cursor_index);
         }
