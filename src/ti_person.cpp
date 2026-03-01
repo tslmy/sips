@@ -132,11 +132,15 @@ Person::Person(START start, TYPE type, int id)
     _sprite.value().set_horizontal_flip(false);
   }
 
-  pos.set_y(pos.y() + 15);
-  _shadow = _create_shadow(pos);
+  bn::fixed_point shadow_pos = _sprite.value().position();
+  shadow_pos.set_y(shadow_pos.y() + 15);
+  _shadow = _create_shadow(shadow_pos);
 }
 
 void Person::setStyle(TYPE type, START start, bn::fixed_point pos) {
+  if (start != START::COUNTER) {
+    pos.set_y(_randomized_street_y(pos.y()));
+  }
   _type = type;
   _sprite_item = *TYPE_TO_SPRITE[static_cast<int>(type)];
   _sprite = _create_sprite(pos, start != START::RIGHT, _sprite_item.value());
@@ -181,12 +185,18 @@ bn::fixed_point Person::_random_street_loiter_point(STATE resume_state) {
 
   bn::fixed range = max_x - min_x;
   if (range <= 0) {
-    return current_pos;
+    return bn::fixed_point(current_pos.x(),
+                           _randomized_street_y(current_pos.y()));
   }
 
   bn::fixed random_offset = _random.get_fixed(range);
   bn::fixed random_x = min_x + random_offset;
-  return bn::fixed_point(random_x, current_pos.y());
+  return bn::fixed_point(random_x, _randomized_street_y(current_pos.y()));
+}
+
+bn::fixed Person::_randomized_street_y(bn::fixed base_y) {
+  int offset = _random.get_int(21) - 10;
+  return base_y + bn::fixed(offset);
 }
 
 bool Person::_try_start_loitering(STATE resume_state) {

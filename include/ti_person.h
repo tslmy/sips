@@ -111,6 +111,7 @@ class Person {
   void _begin_loitering(STATE resume_state);
   void _stop_loitering();
   bn::fixed_point _random_street_loiter_point(STATE resume_state);
+  bn::fixed _randomized_street_y(bn::fixed base_y);
 
  public:
   /**
