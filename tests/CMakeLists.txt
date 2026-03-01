@@ -14,10 +14,36 @@ add_executable(test_helpers
 )
 
 if(NOT APPLE)
-    add_library(coverage_objects OBJECT
-        ../src/wishlist_data.cpp
-        ../src/wishlist_menu.cpp
+    set(COVERAGE_GENERATED_HEADERS
+        "${CMAKE_CURRENT_SOURCE_DIR}/../build/bn_regular_bg_items_overlay.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../build/bn_sprite_items_cursor.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../build/bn_sprite_items_bonsai.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../build/bn_sprite_items_cactus1.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../build/bn_sprite_items_clock.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../build/bn_sprite_items_cookies.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../build/bn_sprite_items_painting.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../build/bn_sprite_items_sylvester.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../build/bn_sprite_items_topiary.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../build/bn_sprite_items_typist.h"
+        "${CMAKE_CURRENT_SOURCE_DIR}/../build/bn_sprite_items_vines.h"
     )
+
+    set(ENABLE_COVERAGE_OBJECTS TRUE)
+    foreach(GENERATED_HEADER IN LISTS COVERAGE_GENERATED_HEADERS)
+        if(NOT EXISTS "${GENERATED_HEADER}")
+            set(ENABLE_COVERAGE_OBJECTS FALSE)
+            break()
+        endif()
+    endforeach()
+
+    if(ENABLE_COVERAGE_OBJECTS)
+        add_library(coverage_objects OBJECT
+            ../src/wishlist_data.cpp
+            ../src/wishlist_menu.cpp
+        )
+    else()
+        message(STATUS "Skipping coverage_objects: missing generated asset headers in ../build")
+    endif()
 endif()
 
 target_link_libraries(test_helpers PRIVATE Catch2::Catch2WithMain)
@@ -35,7 +61,6 @@ if(TARGET coverage_objects)
 
     target_compile_options(coverage_objects PRIVATE
         -Wno-error
-        -Wno-pointer-to-int-cast
         -Wno-shorten-64-to-32
     )
 endif()
