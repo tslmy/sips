@@ -56,53 +56,168 @@
 #include "ti_person.h"
 
 namespace {
-bn::fixed_point get_cursor_pos(int index) {
-  return bn::fixed_point(12, -61 + index * 12);
+constexpr int MENU_VISIBLE_Y = 0;
+constexpr int MENU_HIDDEN_Y = -100;
+constexpr int MENU_SLIDE_SPEED = 8;
+
+bn::fixed_point get_cursor_pos(int index, int menu_y) {
+  return bn::fixed_point(12, -61 + index * 12 + menu_y);
 };
 
 // Return true with probability numerator/denominator using provided RNG.
 // numerator: number of successful outcomes; denominator: total outcomes.
-inline bool chance(bn::random& rng, int numerator, int denominator = 100) {
+inline bool chance(bn::random &rng, int numerator, int denominator = 100) {
   if (denominator <= 0) return false;
   if (numerator <= 0) return false;
   if (numerator >= denominator) return true;
   return rng.get_int(denominator) < numerator;
 }
 
-void redraw_wishlist(bn::sprite_text_generator& text_generator,
-                     bn::vector<bn::sprite_ptr, 60>& text_sprites,
-                     bn::vector<int, 16>& prices) {
+void redraw_wishlist(bn::sprite_text_generator &text_generator,
+                     bn::vector<bn::sprite_ptr, 60> &text_sprites,
+                     const bn::vector<int, 16> &prices, int menu_y) {
   text_sprites.clear();
   text_generator.set_left_alignment();
-  text_generator.generate(20, -72, "To Buy", text_sprites);
-  text_generator.generate(20, -60, "Clock", text_sprites);
-  text_generator.generate(20, -48, "Cookies", text_sprites);
-  text_generator.generate(20, -36, "Bonsai", text_sprites);
-  text_generator.generate(20, -24, "Vines", text_sprites);
-  text_generator.generate(20, -12, "Topiary", text_sprites);
-  text_generator.generate(20, 0, "Art", text_sprites);
-  text_generator.generate(20, 12, "Cactus", text_sprites);
-  text_generator.generate(20, 24, "Kitty", text_sprites);
-  text_generator.generate(20, 36, "Wi-fi", text_sprites);
+  text_generator.generate(20, -72 + menu_y, "To Buy", text_sprites);
+  text_generator.generate(20, -60 + menu_y, "Clock", text_sprites);
+  text_generator.generate(20, -48 + menu_y, "Cookies", text_sprites);
+  text_generator.generate(20, -36 + menu_y, "Bonsai", text_sprites);
+  text_generator.generate(20, -24 + menu_y, "Vines", text_sprites);
+  text_generator.generate(20, -12 + menu_y, "Topiary", text_sprites);
+  text_generator.generate(20, 0 + menu_y, "Art", text_sprites);
+  text_generator.generate(20, 12 + menu_y, "Cactus", text_sprites);
+  text_generator.generate(20, 24 + menu_y, "Kitty", text_sprites);
+  text_generator.generate(20, 36 + menu_y, "Wi-fi", text_sprites);
   text_generator.set_right_alignment();
-  text_generator.generate(112, -72, "$", text_sprites);
+  text_generator.generate(112, -72 + menu_y, "$", text_sprites);
   for (int i = 0; i < prices.size(); i++) {
     if (prices.at(i) == 0) {
-      text_generator.generate(116, -60 + i * 12, "--", text_sprites);
+      text_generator.generate(116, -60 + i * 12 + menu_y, "--", text_sprites);
     } else {
-      text_generator.generate(116, -60 + i * 12, bn::to_string<8>(prices.at(i)),
-                              text_sprites);
+      text_generator.generate(116, -60 + i * 12 + menu_y,
+                              bn::to_string<8>(prices.at(i)), text_sprites);
     }
   }
   return;
 }
+
+class WishlistMenu {
+ public:
+  enum class State {
+    hidden,
+    opening,
+    open,
+    closing,
+  };
+
+  explicit WishlistMenu(bn::sprite_text_generator &text_generator)
+      : menu_text_generator(text_generator),
+        menu_background(bn::regular_bg_items::overlay.create_bg(0, 0)),
+        cursor(bn::sprite_items::cursor.create_sprite(
+            get_cursor_pos(0, MENU_HIDDEN_Y))) {
+    menu_background.set_priority(1);
+    menu_background.set_visible(false);
+    menu_background.set_y(MENU_HIDDEN_Y);
+
+    cursor.set_bg_priority(0);
+    cursor.set_visible(false);
+    state = State::hidden;
+  }
+
+  void show(const bn::vector<int, 16> &prices, int index) {
+    menu_y = MENU_HIDDEN_Y;
+    cursor_index = index;
+    cursor_x_offset = 0;
+    menu_background.set_y(menu_y);
+    menu_background.set_visible(true);
+    cursor.set_visible(true);
+    update_cursor_position();
+    redraw_wishlist(menu_text_generator, text_sprites, prices, menu_y);
+    state = State::opening;
+  }
+
+  void hide() {
+    if (state != State::hidden) {
+      state = State::closing;
+    }
+  }
+
+  void update(const bn::vector<int, 16> &prices) {
+    if (state == State::hidden || !menu_background.visible()) {
+      return;
+    }
+
+    if (state == State::opening) {
+      menu_y += MENU_SLIDE_SPEED;
+      if (menu_y > MENU_VISIBLE_Y) {
+        menu_y = MENU_VISIBLE_Y;
+        state = State::open;
+      }
+      menu_background.set_y(menu_y);
+      redraw_wishlist(menu_text_generator, text_sprites, prices, menu_y);
+    } else if (state == State::closing) {
+      menu_y -= MENU_SLIDE_SPEED;
+      if (menu_y < MENU_HIDDEN_Y) {
+        menu_y = MENU_HIDDEN_Y;
+        state = State::hidden;
+        menu_background.set_visible(false);
+        cursor.set_visible(false);
+        text_sprites.clear();
+        cursor_x_offset = 0;
+      }
+
+      menu_background.set_y(menu_y);
+      if (state != State::hidden) {
+        redraw_wishlist(menu_text_generator, text_sprites, prices, menu_y);
+      }
+    }
+
+    update_cursor_position();
+  }
+
+  void set_cursor_index(int index) {
+    cursor_index = index;
+    update_cursor_position();
+  }
+
+  void set_cursor_x_offset(int x_offset) {
+    cursor_x_offset = x_offset;
+    update_cursor_position();
+  }
+
+  void refresh_text(const bn::vector<int, 16> &prices) {
+    if (menu_background.visible()) {
+      redraw_wishlist(menu_text_generator, text_sprites, prices, menu_y);
+    }
+  }
+
+  bool fully_open() const { return state == State::open; }
+
+  bool hidden() const { return state == State::hidden; }
+
+ private:
+  void update_cursor_position() {
+    bn::fixed_point base_pos = get_cursor_pos(cursor_index, menu_y);
+    cursor.set_position(
+        bn::fixed_point(base_pos.x() + cursor_x_offset, base_pos.y()));
+  }
+
+  bn::sprite_text_generator &menu_text_generator;
+  bn::vector<bn::sprite_ptr, 60> text_sprites;
+  bn::regular_bg_ptr menu_background;
+  bn::sprite_ptr cursor;
+  int menu_y = MENU_HIDDEN_Y;
+  int cursor_index = 0;
+  int cursor_x_offset = 0;
+  State state = State::hidden;
+};
 }  // namespace
 
 int main() {
   bn::core::init();
 
   bn::sprite_text_generator text_generator(ti::variable_8x8_sprite_font);
-  bn::vector<bn::sprite_ptr, 60> text_sprites;
+  WishlistMenu wishlist_menu(text_generator);
   bn::vector<bn::sprite_ptr, 4> cash_text_sprites;
   text_generator.set_bg_priority(0);
 
@@ -114,9 +229,6 @@ int main() {
 
   int is_menu_shown = false;
   int cursor_index = 0;
-  bn::sprite_ptr cursor =
-      bn::sprite_items::cursor.create_sprite(get_cursor_pos(cursor_index));
-  cursor.set_bg_priority(0);
 
   // Cursor shake state
   int cursor_shake_frames_remaining = 0;
@@ -125,7 +237,7 @@ int main() {
   struct WishlistItem {
     int price;
     bn::fixed_point pos;
-    const bn::sprite_item* sprite_item;
+    const bn::sprite_item *sprite_item;
   };
 
   auto generate_wishlist = []() -> bn::vector<WishlistItem, 16> {
@@ -148,7 +260,7 @@ int main() {
   bn::vector<WishlistItem, 16> wishlist = generate_wishlist();
   bn::vector<bn::sprite_ptr, 16> upgrades;
   bn::vector<int, 16> prices;
-  for (const WishlistItem& item : wishlist) {
+  for (const WishlistItem &item : wishlist) {
     prices.push_back(item.price);
     upgrades.push_back(item.sprite_item->create_sprite(item.pos));
   }
@@ -167,10 +279,6 @@ int main() {
 
   // map
   bn::regular_bg_ptr map = bn::regular_bg_items::bg1.create_bg(0, 0);
-  bn::regular_bg_ptr menu_background =
-      bn::regular_bg_items::overlay.create_bg(0, 0);
-  menu_background.set_priority(1);
-  menu_background.set_visible(false);
 
   // sprite
   bn::sprite_ptr title = bn::sprite_items::title.create_sprite(16, -22);
@@ -263,58 +371,60 @@ int main() {
   people.push_back(ti::Person(ti::START::LEFT, ti::TYPE::GREEN_SHIRT, 9));
 
   while (true) {
-    if (is_menu_shown) {
-      cursor.set_visible(true);
-      if (bn::keypad::up_pressed()) {
-        cursor_index = ti::move_cursor(cursor_index, -1, prices);
-      }
-      if (bn::keypad::down_pressed()) {
-        cursor_index = ti::move_cursor(cursor_index, +1, prices);
-      }
+    wishlist_menu.update(prices);
 
-      // Cursor shake effect
-      if (cursor_shake_frames_remaining > 0) {
-        bn::fixed_point orig_pos = get_cursor_pos(cursor_index);
-        cursor.set_position(bn::fixed_point(
-            orig_pos.x() + cursor_shake_direction * 2, orig_pos.y()));
-        cursor_shake_frames_remaining--;
-        cursor_shake_direction *= -1;
-        if (cursor_shake_frames_remaining == 0) {
-          cursor.set_position(orig_pos);
+    if (is_menu_shown) {
+      wishlist_menu.set_cursor_index(cursor_index);
+
+      if (wishlist_menu.fully_open()) {
+        if (bn::keypad::up_pressed()) {
+          cursor_index = ti::move_cursor(cursor_index, -1, prices);
         }
-      } else {
-        cursor.set_position(get_cursor_pos(cursor_index));
-      }
-      if (bn::keypad::a_pressed()) {
-        const int selected_price = prices.at(cursor_index);
-        if (selected_price > 0 && selected_price <= cash) {
-          cash = cash - selected_price;
-          upgrades.at(cursor_index)
-              .set_visible(!upgrades.at(cursor_index).visible());
-          prices.at(cursor_index) = 0;
-          redraw_wishlist(text_generator, text_sprites, prices);
-          popularity_level = popularity_level + 1;
-          popularity_bar.set_item(bn::sprite_items::popularity_bar,
-                                  popularity_level);
-          is_menu_shown = false;
-          menu_background.set_visible(false);
-          text_sprites.clear();
-          twinkle.set_position(upgrades.at(cursor_index).position());
-          twinkle.set_visible(true);
-          bn::sound_items::sparkle.play(0.8);
-          twinkle_action = bn::create_sprite_animate_action_once(
-              twinkle, 6, bn::sprite_items::twinkle.tiles_item(), 0, 1, 2, 3, 4,
-              5, 6, 7, 8, 9, 10);
-        } else if (selected_price > 0 && selected_price > cash) {
-          cursor_shake_frames_remaining = 10;
-          cursor_shake_direction = 1;
-          bn::sound_items::cancel.play(1.0);
+        if (bn::keypad::down_pressed()) {
+          cursor_index = ti::move_cursor(cursor_index, +1, prices);
+        }
+
+        // Cursor shake effect
+        if (cursor_shake_frames_remaining > 0) {
+          wishlist_menu.set_cursor_x_offset(cursor_shake_direction * 2);
+          cursor_shake_frames_remaining--;
+          cursor_shake_direction *= -1;
+          if (cursor_shake_frames_remaining == 0) {
+            wishlist_menu.set_cursor_x_offset(0);
+          }
+        } else {
+          wishlist_menu.set_cursor_x_offset(0);
+        }
+
+        if (bn::keypad::a_pressed()) {
+          const int selected_price = prices.at(cursor_index);
+          if (selected_price > 0 && selected_price <= cash) {
+            cash = cash - selected_price;
+            upgrades.at(cursor_index)
+                .set_visible(!upgrades.at(cursor_index).visible());
+            prices.at(cursor_index) = 0;
+            wishlist_menu.refresh_text(prices);
+            popularity_level = popularity_level + 1;
+            popularity_bar.set_item(bn::sprite_items::popularity_bar,
+                                    popularity_level);
+            is_menu_shown = false;
+            wishlist_menu.hide();
+            twinkle.set_position(upgrades.at(cursor_index).position());
+            twinkle.set_visible(true);
+            bn::sound_items::sparkle.play(0.8);
+            twinkle_action = bn::create_sprite_animate_action_once(
+                twinkle, 6, bn::sprite_items::twinkle.tiles_item(), 0, 1, 2, 3,
+                4, 5, 6, 7, 8, 9, 10);
+          } else if (selected_price > 0 && selected_price > cash) {
+            cursor_shake_frames_remaining = 10;
+            cursor_shake_direction = 1;
+            bn::sound_items::cancel.play(1.0);
+          }
         }
       }
     } else {
-      cursor.set_visible(false);
       if (bn::keypad::a_pressed()) {
-        if (!is_menu_shown) {
+        if (!is_menu_shown && wishlist_menu.hidden()) {
           cursor_index = 0;
           for (int i = 0; i < prices.size(); ++i) {
             if (prices.at(i) > 0) {
@@ -323,16 +433,14 @@ int main() {
             }
           }
           is_menu_shown = true;
-          menu_background.set_visible(true);
-          redraw_wishlist(text_generator, text_sprites, prices);
+          wishlist_menu.show(prices, cursor_index);
         }
       }
     }
 
     if (bn::keypad::b_pressed() && is_menu_shown) {
       is_menu_shown = false;
-      menu_background.set_visible(false);
-      text_sprites.clear();
+      wishlist_menu.hide();
     }
 
     if (true) {
