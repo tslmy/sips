@@ -30,15 +30,6 @@ int first_unpurchased_index(const PurchasedFlags& purchased) {
   return 0;
 }
 
-inline int selected_price(bool is_purchased, int base_price) {
-  return is_purchased ? 0 : base_price;
-}
-
-inline bool can_purchase(bool is_purchased, int base_price, int cash) {
-  const int price = selected_price(is_purchased, base_price);
-  return price > 0 && price <= cash;
-}
-
 inline PurchaseAttempt attempt_purchase(bool is_purchased, int base_price,
                                         int cash, int popularity_level) {
   if (is_purchased) {

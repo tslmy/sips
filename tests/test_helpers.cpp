@@ -91,21 +91,6 @@ TEST_CASE("wishlist_logic::first_unpurchased_index", "[wishlist][logic]") {
   }
 }
 
-TEST_CASE("wishlist_logic purchase checks", "[wishlist][logic]") {
-  SECTION("selected price is zero when purchased") {
-    REQUIRE(wishlist::logic::selected_price(true, 55) == 0);
-    REQUIRE(wishlist::logic::selected_price(false, 55) == 55);
-  }
-
-  SECTION("can_purchase enforces purchase and cash constraints") {
-    REQUIRE(wishlist::logic::can_purchase(false, 30, 30));
-    REQUIRE(wishlist::logic::can_purchase(false, 30, 50));
-    REQUIRE_FALSE(wishlist::logic::can_purchase(false, 30, 29));
-    REQUIRE_FALSE(wishlist::logic::can_purchase(true, 30, 999));
-    REQUIRE_FALSE(wishlist::logic::can_purchase(false, 0, 999));
-  }
-}
-
 TEST_CASE("wishlist_logic::attempt_purchase branches", "[wishlist][logic]") {
   SECTION("successful purchase updates state") {
     const auto result = wishlist::logic::attempt_purchase(false, 40, 100, 3);
