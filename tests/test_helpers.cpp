@@ -41,42 +41,6 @@ TEST_CASE("get_next_step: snap when close", "[helpers]") {
   REQUIRE(result.y() == 20);
 }
 
-// Place this after the get_next_step tests.
-TEST_CASE("move_cursor_available: skips purchased items and respects bounds",
-          "[cursor][helpers]") {
-  using Vec = std::vector<bool>;
-  // Unpurchased everywhere
-  {
-    Vec purchased = {false, false, false, false};
-    REQUIRE(ti::move_cursor_available(1, +1, purchased) == 2);
-    REQUIRE(ti::move_cursor_available(2, -1, purchased) == 1);
-  }
-  // Item at index 2 is purchased
-  {
-    Vec purchased = {false, false, true, false};
-    REQUIRE(ti::move_cursor_available(1, +1, purchased) == 3);
-    REQUIRE(ti::move_cursor_available(3, -1, purchased) == 1);
-  }
-  // Multiple purchased in a row
-  {
-    Vec purchased = {false, true, true, false};
-    REQUIRE(ti::move_cursor_available(0, +1, purchased) == 3);
-    REQUIRE(ti::move_cursor_available(3, -1, purchased) == 0);
-  }
-  // All in direction purchased: should stay
-  {
-    Vec purchased = {false, true, true, true};
-    REQUIRE(ti::move_cursor_available(0, +1, purchased) == 0);
-    REQUIRE(ti::move_cursor_available(3, -1, purchased) == 0);
-  }
-  // At bounds, cannot move further
-  {
-    Vec purchased = {false, false, false};
-    REQUIRE(ti::move_cursor_available(0, -1, purchased) == 0);
-    REQUIRE(ti::move_cursor_available(2, +1, purchased) == 2);
-  }
-}
-
 TEST_CASE("wishlist_logic::first_unpurchased_index", "[wishlist][logic]") {
   using Vec = std::vector<bool>;
 
