@@ -13,6 +13,10 @@ Originally built by [Jono Shields](https://jonoshields.com/) over WinterJam23, t
 * UX
     * If you attempt to buy something you can't afford, the cursor will shake and play a sound.
     * The cursor will now skip already-purchased items.
+* NPC behavior
+  * People may simply pass by, not coming in for a drink.
+  * People may loiter on the street for a short while.
+  * People now walk (or loiter) at random positions in the vertical (y-axis) direction.
 * Dev-only
     * Adopted [Google C++ Style](https://google.github.io/styleguide/cppguide.html), automatically enforced via pre-commit hooks.
     * Replaced vanilla `make` with `CMake` as the build system.
