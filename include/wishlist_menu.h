@@ -17,15 +17,18 @@ class WishlistMenu {
 
   explicit WishlistMenu(bn::sprite_text_generator& text_generator);
 
-  void show(const bn::vector<bool, 16>& purchased, int index);
+  void show(const bn::vector<bool, 16>& purchased);
   void hide();
   void update(const bn::vector<bool, 16>& purchased);
-  void set_cursor_index(int index);
+  void move_cursor(int delta, const bn::vector<bool, 16>& purchased);
   void set_cursor_x_offset(int x_offset);
   void refresh_text(const bn::vector<bool, 16>& purchased);
+  static int move_cursor_available(int current_index, int delta,
+                                   const bn::vector<bool, 16>& purchased);
 
   [[nodiscard]] bool fully_open() const;
   [[nodiscard]] bool hidden() const;
+  [[nodiscard]] int cursor_index_value() const;
 
  private:
   void update_cursor_position();

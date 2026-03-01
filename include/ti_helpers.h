@@ -25,32 +25,6 @@ namespace ti {
  */
 bn::fixed_point get_next_step(const bn::fixed_point& from,
                               const bn::fixed_point& to, bn::fixed speed);
-
-/**
- * Finds the next cursor index when skipping unavailable items.
- *
- * @param current_index Current cursor position
- * @param delta +1 for downward, -1 for upward movement
- * @param purchased Purchased flags where true means unavailable
- * @return The next valid cursor index, or current_index if none exists in
- * direction
- */
-template <typename PurchasedFlags>
-int move_cursor_available(int current_index, int delta,
-                          const PurchasedFlags& purchased) {
-  const int original_index = current_index;
-  int idx = current_index + delta;
-
-  while (idx >= 0 && idx < int(purchased.size()) && purchased[idx]) {
-    idx += delta;
-  }
-
-  if (idx < 0 || idx >= int(purchased.size())) {
-    return original_index;
-  }
-
-  return idx;
-}
 }  // namespace ti
 
 #endif

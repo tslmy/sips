@@ -4,6 +4,7 @@
 #include "bn_sprite_items_cursor.h"
 #include "bn_string.h"
 #include "wishlist_data.h"
+#include "wishlist_logic.h"
 
 namespace {
 constexpr int MENU_VISIBLE_Y = 0;
@@ -58,13 +59,18 @@ WishlistMenu::WishlistMenu(bn::sprite_text_generator& text_generator)
   cursor.set_visible(false);
 }
 
-void WishlistMenu::show(const bn::vector<bool, 16>& purchased, int index) {
+void WishlistMenu::show(const bn::vector<bool, 16>& purchased) {
   menu_y = MENU_HIDDEN_Y;
-  cursor_index = index;
+  cursor_index = wishlist::logic::first_unpurchased_index(purchased);
+
+  if (cursor_index < 0 || cursor_index >= wishlist::item_count()) {
+    cursor.set_visible(false);
+  } else {
+    cursor.set_visible(true);
+  }
   cursor_x_offset = 0;
   menu_background.set_y(menu_y);
   menu_background.set_visible(true);
-  cursor.set_visible(true);
   update_cursor_position();
   redraw_wishlist(menu_text_generator, text_sprites, purchased, menu_y);
   state = State::opening;
@@ -109,8 +115,13 @@ void WishlistMenu::update(const bn::vector<bool, 16>& purchased) {
   update_cursor_position();
 }
 
-void WishlistMenu::set_cursor_index(int index) {
-  cursor_index = index;
+void WishlistMenu::move_cursor(int delta,
+                               const bn::vector<bool, 16>& purchased) {
+  if (cursor_index < 0) {
+    return;
+  }
+
+  cursor_index = move_cursor_available(cursor_index, delta, purchased);
   update_cursor_position();
 }
 
@@ -128,6 +139,25 @@ void WishlistMenu::refresh_text(const bn::vector<bool, 16>& purchased) {
 bool WishlistMenu::fully_open() const { return state == State::open; }
 
 bool WishlistMenu::hidden() const { return state == State::hidden; }
+
+int WishlistMenu::cursor_index_value() const { return cursor_index; }
+
+// This is kept as a separate function to allow unit testing in the future.
+int WishlistMenu::move_cursor_available(int current_index, int delta,
+                                        const bn::vector<bool, 16>& purchased) {
+  const int original_index = current_index;
+  int idx = current_index + delta;
+
+  while (idx >= 0 && idx < int(purchased.size()) && purchased[idx]) {
+    idx += delta;
+  }
+
+  if (idx < 0 || idx >= int(purchased.size())) {
+    return original_index;
+  }
+
+  return idx;
+}
 
 void WishlistMenu::update_cursor_position() {
   bn::fixed_point base_pos = get_cursor_pos(cursor_index, menu_y);

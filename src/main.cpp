@@ -50,7 +50,6 @@
 #include "bn_sprite_text_generator.h"
 #include "bn_string.h"
 #include "ti_font.h"
-#include "ti_helpers.h"
 #include "ti_person.h"
 #include "wishlist_data.h"
 #include "wishlist_logic.h"
@@ -116,7 +115,6 @@ int main() {
                                                      popularity_level);
 
   int is_menu_shown = false;
-  int cursor_index = 0;
 
   // Cursor shake state
   int cursor_shake_frames_remaining = 0;
@@ -231,15 +229,15 @@ int main() {
     wishlist_menu.update(purchased);
 
     if (is_menu_shown) {
-      wishlist_menu.set_cursor_index(cursor_index);
-
       if (wishlist_menu.fully_open()) {
         if (bn::keypad::up_pressed()) {
-          cursor_index = ti::move_cursor_available(cursor_index, -1, purchased);
+          wishlist_menu.move_cursor(-1, purchased);
         }
         if (bn::keypad::down_pressed()) {
-          cursor_index = ti::move_cursor_available(cursor_index, +1, purchased);
+          wishlist_menu.move_cursor(+1, purchased);
         }
+
+        const int cursor_index = wishlist_menu.cursor_index_value();
 
         // Cursor shake effect
         if (cursor_shake_frames_remaining > 0) {
@@ -290,9 +288,8 @@ int main() {
     } else {
       if (bn::keypad::a_pressed()) {
         if (!is_menu_shown && wishlist_menu.hidden()) {
-          cursor_index = wishlist::logic::first_unpurchased_index(purchased);
           is_menu_shown = true;
-          wishlist_menu.show(purchased, cursor_index);
+          wishlist_menu.show(purchased);
         }
       }
     }
