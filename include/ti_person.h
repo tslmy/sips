@@ -45,6 +45,8 @@ enum class STATE {
   EXITING = 12,
   JOINING_QUEUE = 13,
   LOITERING = 14,
+  WALKING_LEFT_PASSER = 15,
+  WALKING_RIGHT_PASSER = 16,
 };
 
 /**
@@ -107,11 +109,13 @@ class Person {
   bool _loiter_in_position = false;
   static int _active_loiterers;
   static constexpr int _max_loiterers = 3;
+  static constexpr int _walk_by_chance = 4;  // 1 in 4 chance to skip entering
   bool _try_start_loitering(STATE resume_state);
   void _begin_loitering(STATE resume_state);
   void _stop_loitering();
   bn::fixed_point _random_street_loiter_point(STATE resume_state);
   bn::fixed _randomized_street_y(bn::fixed base_y);
+  bool _should_walk_by();
 
  public:
   /**
