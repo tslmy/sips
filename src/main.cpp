@@ -63,6 +63,50 @@ inline bool chance(bn::random &rng, int numerator, int denominator = 100) {
   if (numerator >= denominator) return true;
   return rng.get_int(denominator) < numerator;
 }
+
+template <typename Action>
+inline void update_if_running(Action &action) {
+  if (!action.done()) {
+    action.update();
+  }
+}
+
+inline int first_available_wishlist_index(const bn::vector<int, 16> &prices) {
+  for (int i = 0; i < prices.size(); ++i) {
+    if (prices.at(i) > 0) {
+      return i;
+    }
+  }
+
+  return 0;
+}
+
+void initialize_people(bn::vector<ti::Person, 16> &people) {
+  people.clear();
+  for (int i = 0; i < 10; ++i) {
+    const ti::START start = i % 2 == 0 ? ti::START::RIGHT : ti::START::LEFT;
+    people.push_back(ti::Person(start, ti::TYPE::GREEN_SHIRT, i));
+  }
+}
+
+void rebuild_available_types(const bn::vector<ti::Person, 16> &people,
+                             int popularity_level, bn::vector<int, 16> &types) {
+  types.clear();
+  for (int i = 0; i < 14; ++i) {
+    types.push_back(i);
+  }
+
+  const int active_people = bn::min(popularity_level, people.size());
+  for (int i = 0; i < active_people; ++i) {
+    const int used_type = int(people.at(i).get_type());
+    for (int j = 0; j < types.size(); ++j) {
+      if (types.at(j) == used_type) {
+        types.erase(types.begin() + j);
+        break;
+      }
+    }
+  }
+}
 }  // namespace
 
 int main() {
@@ -211,16 +255,8 @@ int main() {
   bool purchased_this_frame = false;
 
   bn::vector<ti::Person, 16> people;
-  people.push_back(ti::Person(ti::START::RIGHT, ti::TYPE::GREEN_SHIRT, 0));
-  people.push_back(ti::Person(ti::START::LEFT, ti::TYPE::GREEN_SHIRT, 1));
-  people.push_back(ti::Person(ti::START::RIGHT, ti::TYPE::GREEN_SHIRT, 2));
-  people.push_back(ti::Person(ti::START::LEFT, ti::TYPE::GREEN_SHIRT, 3));
-  people.push_back(ti::Person(ti::START::RIGHT, ti::TYPE::GREEN_SHIRT, 4));
-  people.push_back(ti::Person(ti::START::LEFT, ti::TYPE::GREEN_SHIRT, 5));
-  people.push_back(ti::Person(ti::START::RIGHT, ti::TYPE::GREEN_SHIRT, 6));
-  people.push_back(ti::Person(ti::START::LEFT, ti::TYPE::GREEN_SHIRT, 7));
-  people.push_back(ti::Person(ti::START::RIGHT, ti::TYPE::GREEN_SHIRT, 8));
-  people.push_back(ti::Person(ti::START::LEFT, ti::TYPE::GREEN_SHIRT, 9));
+  bn::vector<int, 16> available_types;
+  initialize_people(people);
 
   while (true) {
     wishlist_menu.update(prices);
@@ -277,13 +313,7 @@ int main() {
     } else {
       if (bn::keypad::a_pressed()) {
         if (!is_menu_shown && wishlist_menu.hidden()) {
-          cursor_index = 0;
-          for (int i = 0; i < prices.size(); ++i) {
-            if (prices.at(i) > 0) {
-              cursor_index = i;
-              break;
-            }
-          }
+          cursor_index = first_available_wishlist_index(prices);
           is_menu_shown = true;
           wishlist_menu.show(prices, cursor_index);
         }
@@ -295,16 +325,14 @@ int main() {
       wishlist_menu.hide();
     }
 
-    if (true) {
-      cash_text_sprites.clear();
-      text_generator.set_palette_item(
-          bn::sprite_palette_items::white_text_palette);
-      text_generator.set_right_alignment();
-      text_generator.generate(-21, -71, "$" + bn::to_string<8>(cash),
-                              cash_text_sprites);
-      text_generator.set_palette_item(
-          bn::sprite_palette_items::black_text_palette);
-    }
+    cash_text_sprites.clear();
+    text_generator.set_palette_item(
+        bn::sprite_palette_items::white_text_palette);
+    text_generator.set_right_alignment();
+    text_generator.generate(-21, -71, "$" + bn::to_string<8>(cash),
+                            cash_text_sprites);
+    text_generator.set_palette_item(
+        bn::sprite_palette_items::black_text_palette);
 
     if (bustle_timer > 60 * 29) {
       bustle_timer = 0;
@@ -373,15 +401,9 @@ int main() {
 
     // TODO: Swallow mascot movement logic (uncomment if swallow is re-enabled)
 
-    if (!twinkle_action.done()) {
-      twinkle_action.update();
-    }
-    if (!steamAction.done()) {
-      steamAction.update();
-    }
-    if (!drinkerAction.done()) {
-      drinkerAction.update();
-    }
+    update_if_running(twinkle_action);
+    update_if_running(steamAction);
+    update_if_running(drinkerAction);
     if (!reflectAction1.done()) {
       reflectAction1.update();
       // TODO: Update reflectAction2 animation if feature is added.
@@ -393,32 +415,18 @@ int main() {
         // TODO: (Optional) Restart reflectAction2 as part of polish animation.
       }
     }
-    if (!pigeonAction.done()) {
-      pigeonAction.update();
-    }
-    if (!pigeon2Action.done()) {
-      pigeon2Action.update();
-    }
+    update_if_running(pigeonAction);
+    update_if_running(pigeon2Action);
     // TODO: Update swallow animation if mascot feature enabled.
     sylvesterAction.update();
     if (!typistAction.done()) {
       typistAction.update();
     }
-    bn::vector<int, 16> types;
-    for (int i = 0; i < 14; i++) {
-      types.push_back(i);
-    }
-    for (int i = 0; i < popularity_level; i++) {
-      for (int j = 0; j < types.size(); j++) {
-        if ((int)people.at(i).get_type() == types.at(j)) {
-          types.erase(types.begin() + j);
-        }
-      }
-    }
+    rebuild_available_types(people, popularity_level, available_types);
     for (int i = 0; i < people.size(); i++) {
       if (popularity_level > i) {
         people.at(i).update(order_queue, waiting_spot, purchased_this_frame,
-                            types);
+                            available_types);
       }
     }
     clockAction.update();
@@ -438,6 +446,6 @@ int main() {
       purchased_this_frame = false;
     }
     bn::core::update();
-    rng.get();
+    (void)rng.get();
   }
 }
