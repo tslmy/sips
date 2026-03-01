@@ -3,6 +3,7 @@
 #include "bn_regular_bg_items_overlay.h"
 #include "bn_sprite_items_cursor.h"
 #include "bn_string.h"
+#include "wishlist_data.h"
 
 namespace {
 constexpr int MENU_VISIBLE_Y = 0;
@@ -19,19 +20,16 @@ void redraw_wishlist(bn::sprite_text_generator& text_generator,
   text_sprites.clear();
   text_generator.set_left_alignment();
   text_generator.generate(20, -72 + menu_y, "To Buy", text_sprites);
-  text_generator.generate(20, -60 + menu_y, "Clock", text_sprites);
-  text_generator.generate(20, -48 + menu_y, "Cookies", text_sprites);
-  text_generator.generate(20, -36 + menu_y, "Bonsai", text_sprites);
-  text_generator.generate(20, -24 + menu_y, "Vines", text_sprites);
-  text_generator.generate(20, -12 + menu_y, "Topiary", text_sprites);
-  text_generator.generate(20, 0 + menu_y, "Art", text_sprites);
-  text_generator.generate(20, 12 + menu_y, "Cactus", text_sprites);
-  text_generator.generate(20, 24 + menu_y, "Kitty", text_sprites);
-  text_generator.generate(20, 36 + menu_y, "Wi-fi", text_sprites);
+  const int item_count = wishlist::item_count();
+  for (int i = 0; i < item_count; ++i) {
+    text_generator.generate(20, -60 + i * 12 + menu_y, wishlist::item_name(i),
+                            text_sprites);
+  }
+
   text_generator.set_right_alignment();
   text_generator.generate(112, -72 + menu_y, "$", text_sprites);
 
-  for (int i = 0; i < prices.size(); i++) {
+  for (int i = 0; i < item_count; ++i) {
     if (prices.at(i) == 0) {
       text_generator.generate(116, -60 + i * 12 + menu_y, "--", text_sprites);
     } else {

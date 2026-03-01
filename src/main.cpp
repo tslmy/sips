@@ -52,6 +52,7 @@
 #include "ti_font.h"
 #include "ti_helpers.h"
 #include "ti_person.h"
+#include "wishlist_data.h"
 #include "wishlist_menu.h"
 
 namespace {
@@ -130,42 +131,16 @@ int main() {
   int cursor_shake_frames_remaining = 0;
   int cursor_shake_direction = 1;
 
-  struct WishlistItem {
-    int price;
-    bn::fixed_point pos;
-    const bn::sprite_item *sprite_item;
-  };
-
-  auto generate_wishlist = []() -> bn::vector<WishlistItem, 16> {
-    bn::vector<WishlistItem, 16> items;
-    items.push_back({30, bn::fixed_point(-18, -18), &bn::sprite_items::clock});
-    items.push_back({15, bn::fixed_point(-55, 9), &bn::sprite_items::cookies});
-    items.push_back({70, bn::fixed_point(-86, -23), &bn::sprite_items::bonsai});
-    items.push_back({20, bn::fixed_point(-70, -19), &bn::sprite_items::vines});
-    items.push_back({40, bn::fixed_point(112, 48), &bn::sprite_items::topiary});
-    items.push_back(
-        {55, bn::fixed_point(-53, -8), &bn::sprite_items::painting});
-    items.push_back(
-        {22, bn::fixed_point(-116, 19), &bn::sprite_items::cactus1});
-    items.push_back(
-        {100, bn::fixed_point(-12, 23), &bn::sprite_items::sylvester});
-    items.push_back({125, bn::fixed_point(-35, 42), &bn::sprite_items::typist});
-    return items;
-  };
-
-  bn::vector<WishlistItem, 16> wishlist = generate_wishlist();
   bn::vector<bn::sprite_ptr, 16> upgrades;
   bn::vector<int, 16> prices;
-  for (const WishlistItem &item : wishlist) {
-    prices.push_back(item.price);
-    upgrades.push_back(item.sprite_item->create_sprite(item.pos));
-  }
+  wishlist::initialize_prices(prices);
+  wishlist::initialize_upgrades(upgrades);
   bn::vector<bn::sprite_ptr, 8> popularity_bonuses;
 
   for (bn::sprite_ptr sprite : upgrades) {
     sprite.set_visible(false);
   }
-  upgrades.at(8).set_z_order(-40);
+  upgrades.at(wishlist::WIFI).set_z_order(-40);
 
   bn::music_items::wild_strawberry.play();
   bn::music::set_volume(1);
@@ -217,8 +192,9 @@ int main() {
           drinker, 15, bn::sprite_items::drinker.tiles_item(), 0, 0, 0, 0, 0);
   bn::sprite_animate_action<10> sylvesterAction =
       bn::create_sprite_animate_action_forever(
-          upgrades.at(7), 18, bn::sprite_items::sylvester.tiles_item(), 0, 1, 2,
-          3, 4, 5, 6, 7, 8, 9);
+          upgrades.at(wishlist::KITTY), 18,
+          bn::sprite_items::sylvester.tiles_item(), 0, 1, 2, 3, 4, 5, 6, 7, 8,
+          9);
 
   bn::sprite_animate_action<5> pigeonAction =
       bn::create_sprite_animate_action_once(
@@ -243,12 +219,14 @@ int main() {
 
   bn::sprite_animate_action<2> typistAction =
       bn::create_sprite_animate_action_forever(
-          upgrades.at(8), 8, bn::sprite_items::typist.tiles_item(), 0, 1);
+          upgrades.at(wishlist::WIFI), 8, bn::sprite_items::typist.tiles_item(),
+          0, 1);
 
   bn::sprite_animate_action<12> clockAction =
       bn::create_sprite_animate_action_forever(
-          upgrades.at(0), 300, bn::sprite_items::clock.tiles_item(), 0, 1, 2, 3,
-          4, 5, 6, 7, 8, 9, 10, 11);
+          upgrades.at(wishlist::CLOCK), 300,
+          bn::sprite_items::clock.tiles_item(), 0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+          10, 11);
 
   bn::deque<int, 8> order_queue = {};
   bool waiting_spot = false;
@@ -371,12 +349,14 @@ int main() {
       if (typistAction.done()) {
         if (chance(rng, 19)) {
           typistAction = bn::create_sprite_animate_action_forever(
-              upgrades.at(8), 8, bn::sprite_items::typist.tiles_item(), 0, 1);
+              upgrades.at(wishlist::WIFI), 8,
+              bn::sprite_items::typist.tiles_item(), 0, 1);
         }
       } else {
         if (chance(rng, 19)) {
           typistAction = bn::create_sprite_animate_action_once(
-              upgrades.at(8), 8, bn::sprite_items::typist.tiles_item(), 2, 2);
+              upgrades.at(wishlist::WIFI), 8,
+              bn::sprite_items::typist.tiles_item(), 2, 2);
         }
       }
 
