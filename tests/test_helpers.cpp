@@ -2,10 +2,10 @@
 // Unit tests for ti_helpers using Catch2, with mocks for Butano types.
 
 #define CATCH_CONFIG_MAIN
+#include <catch2/catch_all.hpp>
 #include <cmath>  // for std::abs
 #include <vector>
 
-#include "catch_amalgamated.hpp"
 #include "cursor_helpers.h"
 
 // Minimal mocks for Butano types
