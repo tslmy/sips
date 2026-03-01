@@ -122,6 +122,8 @@ class Person {
   static int _state_index(STATE state);
   friend constexpr bool _ti_verify_state_handler_table();
   bool _advance_street_walk(const bn::fixed_point &target);
+  void _respawn_from_side(START start_side, STATE next_state, bool face_left,
+                          bn::vector<int, 16> &types);
 
   void _handle_walking_left(bn::deque<int, 8> &order_queue, bool &waiting_spot,
                             bool &purchased_this_frame,

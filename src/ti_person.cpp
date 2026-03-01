@@ -549,27 +549,29 @@ void Person::_handle_walking_left_passer(bn::deque<int, 8>&, bool&, bool&,
 void Person::_handle_walking_left_with_coffee(bn::deque<int, 8>&, bool&, bool&,
                                               bn::vector<int, 16>& types) {
   if (_advance_street_walk(LEFT)) {
-    _state = STATE::WALKING_RIGHT;
-    int type_index = _random.get_int(types.size());
-    int next_type = types.at(type_index);
-    types.erase(types.begin() + type_index);
-    setStyle(static_cast<TYPE>(next_type), START::LEFT,
-             _sprite.value().position());
-    _sprite.value().set_horizontal_flip(false);
+    _respawn_from_side(START::LEFT, STATE::WALKING_RIGHT, false, types);
   }
 }
 
 void Person::_handle_walking_right_with_coffee(bn::deque<int, 8>&, bool&, bool&,
                                                bn::vector<int, 16>& types) {
   if (_advance_street_walk(RIGHT)) {
-    _state = STATE::WALKING_LEFT;
-    int type_index = _random.get_int(types.size());
-    int next_type = types.at(type_index);
-    types.erase(types.begin() + type_index);
-    setStyle(static_cast<TYPE>(next_type), START::RIGHT,
-             _sprite.value().position());
-    _sprite.value().set_horizontal_flip(true);
+    _respawn_from_side(START::RIGHT, STATE::WALKING_LEFT, true, types);
   }
+}
+
+void Person::_respawn_from_side(START start_side, STATE next_state,
+                                bool face_left, bn::vector<int, 16>& types) {
+  if (types.empty()) {
+    return;
+  }
+  int type_index = _random.get_int(types.size());
+  int next_type = types.at(type_index);
+  types.erase(types.begin() + type_index);
+  setStyle(static_cast<TYPE>(next_type), start_side,
+           _sprite.value().position());
+  _sprite.value().set_horizontal_flip(face_left);
+  _state = next_state;
 }
 
 /**
