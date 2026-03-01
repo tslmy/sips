@@ -31,22 +31,26 @@ namespace ti {
  * lifecycle in the game.
  */
 enum class STATE {
-  WALKING_LEFT = 1,
-  WALKING_LEFT_W_COFFEE = 2,
-  WALKING_RIGHT = 3,
-  WALKING_RIGHT_W_COFFEE = 4,
-  ENTERING = 5,
-  WALKING_TO_ORDER = 6,
-  WAITING_TO_ORDER = 7,
-  ORDERING = 8,
-  WALKING_TO_COUNTER = 9,
-  WAITING = 10,
-  WALKING_TO_DOOR = 11,
-  EXITING = 12,
-  JOINING_QUEUE = 13,
-  LOITERING = 14,
-  WALKING_LEFT_PASSER = 15,
-  WALKING_RIGHT_PASSER = 16,
+  STREET = 1,
+  ENTERING = 2,
+  WALKING_TO_ORDER = 3,
+  JOINING_QUEUE = 4,
+  WAITING_TO_ORDER = 5,
+  ORDERING = 6,
+  WALKING_TO_COUNTER = 7,
+  WAITING_AT_COUNTER = 8,
+  WALKING_TO_DOOR = 9,
+  EXITING = 10,
+  LOITERING = 11,
+};
+
+enum class STREET_ROLE {
+  ENTER_FROM_LEFT = 0,
+  ENTER_FROM_RIGHT = 1,
+  PASS_LEFT_TO_RIGHT = 2,
+  PASS_RIGHT_TO_LEFT = 3,
+  EXIT_LEFT_WITH_COFFEE = 4,
+  EXIT_RIGHT_WITH_COFFEE = 5,
 };
 
 /**
@@ -98,24 +102,33 @@ class Person {
   TYPE _type = TYPE::GREEN_SHIRT;
   int _wait_max = 320;
   int _wait_time = 0;
-  STATE _state = STATE::WAITING;
+  STATE _state = STATE::STREET;
   void setStyle(TYPE type, START start, bn::fixed_point pos);
   int _id;
   bool _has_loitered = false;
   int _loiter_time = 0;
   int _loiter_duration_frames = 0;
-  STATE _loiter_resume_state = STATE::WALKING_RIGHT;
+  STATE _loiter_resume_state = STATE::STREET;
+  STREET_ROLE _loiter_resume_street_role = STREET_ROLE::ENTER_FROM_LEFT;
+  STREET_ROLE _street_role = STREET_ROLE::ENTER_FROM_LEFT;
   bn::fixed_point _loiter_target_position = bn::fixed_point(0, 0);
   bool _loiter_in_position = false;
   static int _active_loiterers;
   static constexpr int _max_loiterers = 3;
   static constexpr int _walk_by_chance = 4;  // 1 in 4 chance to skip entering
-  bool _try_start_loitering(STATE resume_state);
-  void _begin_loitering(STATE resume_state);
+  bool _try_start_loitering(STREET_ROLE resume_role);
+  void _begin_loitering(STREET_ROLE resume_role);
   void _stop_loitering();
-  bn::fixed_point _random_street_loiter_point(STATE resume_state);
+  bn::fixed_point _random_street_loiter_point(STREET_ROLE resume_role);
   bn::fixed _randomized_street_y(bn::fixed base_y);
   bool _should_walk_by();
+  void _set_street_role(STREET_ROLE role);
+  void _update_street(bn::vector<int, 16>& types);
+  bn::fixed_point _street_target() const;
+  void _handle_street_arrival(bn::vector<int, 16>& types);
+  bool _street_faces_left(STREET_ROLE role) const;
+  void _respawn_new_customer(START start, bn::vector<int, 16>& types);
+  bool _street_allows_loiter(STREET_ROLE role) const;
 
  public:
   /**
