@@ -27,7 +27,7 @@ int first_unpurchased_index(const PurchasedFlags& purchased) {
     }
   }
 
-  return 0;
+  return -1;
 }
 
 inline PurchaseAttempt attempt_purchase(bool is_purchased, int base_price,

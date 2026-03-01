@@ -253,7 +253,7 @@ int main() {
           wishlist_menu.set_cursor_x_offset(0);
         }
 
-        if (bn::keypad::a_pressed()) {
+        if (bn::keypad::a_pressed() && cursor_index >= 0) {
           const bool is_purchased = purchased.at(cursor_index);
           const int base_price = wishlist::base_price(cursor_index);
           const wishlist::logic::PurchaseAttempt purchase_attempt =

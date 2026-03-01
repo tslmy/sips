@@ -49,9 +49,9 @@ TEST_CASE("wishlist_logic::first_unpurchased_index", "[wishlist][logic]") {
     REQUIRE(wishlist::logic::first_unpurchased_index(purchased) == 2);
   }
 
-  SECTION("falls back to 0 when all are purchased") {
+  SECTION("falls back to -1 when all are purchased") {
     Vec purchased = {true, true, true};
-    REQUIRE(wishlist::logic::first_unpurchased_index(purchased) == 0);
+    REQUIRE(wishlist::logic::first_unpurchased_index(purchased) == -1);
   }
 }
 
