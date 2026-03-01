@@ -84,6 +84,38 @@ constexpr const bn::sprite_item* TYPE_TO_SPRITE[] = {
     &bn::sprite_items::walk13,  // PERSON4 = 12
     &bn::sprite_items::walk14,  // PERSON5 = 13
 };
+}  // namespace
+
+const Person::StateHandler Person::_state_handlers[] = {
+    &Person::_handle_walking_left,
+    &Person::_handle_walking_left_with_coffee,
+    &Person::_handle_walking_right,
+    &Person::_handle_walking_right_with_coffee,
+    &Person::_handle_entering,
+    &Person::_handle_walking_to_order,
+    &Person::_handle_waiting_to_order,
+    &Person::_handle_ordering,
+    &Person::_handle_walking_to_counter,
+    &Person::_handle_waiting,
+    &Person::_handle_walking_to_door,
+    &Person::_handle_exiting,
+    &Person::_handle_joining_queue,
+    &Person::_handle_walking_left_passer,
+    &Person::_handle_walking_right_passer,
+};
+
+constexpr bool _ti_verify_state_handler_table() {
+  static_assert(
+      sizeof(Person::_state_handlers) / sizeof(Person::StateHandler) == 15,
+      "State handler table must match STATE enum.");
+  return true;
+}
+
+constexpr bool _ti_state_handler_table_verified =
+    _ti_verify_state_handler_table();
+
+namespace {
+
 int locate_in_queue(const bn::deque<int, 8>& order_queue, int id) {
   for (int i = 0; i < order_queue.size(); ++i) {
     if (order_queue.at(i) == id) return i;
@@ -297,6 +329,270 @@ bool Person::_update_loiter_overlay() {
   return _is_loitering;
 }
 
+int Person::_state_index(STATE state) {
+  int idx = static_cast<int>(state) - 1;
+  return idx < 0 ? 0 : idx;
+}
+
+void Person::_handle_walking_right(bn::deque<int, 8>&, bool&, bool&,
+                                   bn::vector<int, 16>&) {
+  bn::fixed_point next_step =
+      ti::get_next_step(_sprite.value().position(), OUTSIDE, _speed);
+  _sprite.value().set_position(next_step);
+  bool started_loitering = _try_start_loitering();
+  if (!started_loitering && OUTSIDE.x() == next_step.x() &&
+      OUTSIDE.y() == next_step.y()) {
+    if (_should_walk_by()) {
+      _state = STATE::WALKING_RIGHT_PASSER;
+      _sprite.value().set_horizontal_flip(false);
+      _action = bn::create_sprite_animate_action_forever(
+          _sprite.value(), 12, _sprite_item.value().tiles_item(), 0, 1, 2, 3, 4,
+          5, 6, 7);
+    } else {
+      _state = STATE::ENTERING;
+      _sprite.value().set_horizontal_flip(true);
+    }
+  }
+}
+
+void Person::_handle_walking_left(bn::deque<int, 8>&, bool&, bool&,
+                                  bn::vector<int, 16>&) {
+  bn::fixed_point next_step =
+      ti::get_next_step(_sprite.value().position(), OUTSIDE, _speed);
+  _sprite.value().set_position(next_step);
+  bool started_loitering = _try_start_loitering();
+  if (!started_loitering && OUTSIDE.x() == next_step.x() &&
+      OUTSIDE.y() == next_step.y()) {
+    if (_should_walk_by()) {
+      _state = STATE::WALKING_LEFT_PASSER;
+      _sprite.value().set_horizontal_flip(true);
+      _action = bn::create_sprite_animate_action_forever(
+          _sprite.value(), 12, _sprite_item.value().tiles_item(), 0, 1, 2, 3, 4,
+          5, 6, 7);
+    } else {
+      _state = STATE::ENTERING;
+      _sprite.value().set_horizontal_flip(true);
+    }
+  }
+}
+
+void Person::_handle_entering(bn::deque<int, 8>&, bool&, bool&,
+                              bn::vector<int, 16>&) {
+  bn::fixed_point next_step =
+      ti::get_next_step(_sprite.value().position(), DOOR, _speed);
+  _sprite.value().set_position(next_step);
+  if (DOOR.x() == next_step.x() && DOOR.y() == next_step.y()) {
+    _state = STATE::WALKING_TO_ORDER;
+    _sprite.value().set_horizontal_flip(true);
+  }
+}
+
+void Person::_handle_walking_to_order(bn::deque<int, 8>&, bool&, bool&,
+                                      bn::vector<int, 16>&) {
+  bn::fixed_point next_step =
+      ti::get_next_step(_sprite.value().position(), QUEUE_START, _speed);
+  _sprite.value().set_position(next_step);
+  if (QUEUE_START.x() == next_step.x() && QUEUE_START.y() == next_step.y()) {
+    _state = STATE::JOINING_QUEUE;
+  }
+}
+
+void Person::_handle_joining_queue(bn::deque<int, 8>& order_queue,
+                                   bool& waiting_spot,
+                                   bool& purchased_this_frame,
+                                   bn::vector<int, 16>& types) {
+  (void)waiting_spot;
+  (void)purchased_this_frame;
+  (void)types;
+  bn::fixed_point next_step =
+      ti::get_next_step(_sprite.value().position(), TILL, _speed);
+  int index = locate_in_queue(order_queue, _id);
+  if (index == -1) {
+    if (order_queue.size() >= 5) {
+      _state = STATE::WALKING_TO_DOOR;
+      _sprite.value().set_horizontal_flip(false);
+      return;
+    }
+    order_queue.push_back(_id);
+  } else {
+    next_step = ti::get_next_step(_sprite.value().position(),
+                                  LOCATIONS.at(index), _speed);
+  }
+
+  if (_sprite.value().position().x() == next_step.x() &&
+      _sprite.value().position().y() == next_step.y()) {
+    _state = STATE::WAITING_TO_ORDER;
+    _action = bn::create_sprite_animate_action_forever(
+        _sprite.value(), 20, _sprite_item.value().tiles_item(), 16, 16, 16, 16,
+        17, 17, 17, 17);
+    _sprite.value().set_horizontal_flip(true);
+  }
+
+  _sprite.value().set_position(next_step);
+}
+
+void Person::_handle_waiting_to_order(bn::deque<int, 8>& order_queue, bool&,
+                                      bool&, bn::vector<int, 16>&) {
+  int index = locate_in_queue(order_queue, _id);
+  bn::fixed_point next_step = ti::get_next_step(_sprite.value().position(),
+                                                LOCATIONS.at(index), _speed);
+
+  if (_sprite.value().position().x() == next_step.x() &&
+      _sprite.value().position().y() == next_step.y()) {
+    if (index == 0) {
+      _state = STATE::ORDERING;
+    }
+    _action = bn::create_sprite_animate_action_forever(
+        _sprite.value(), 20, _sprite_item.value().tiles_item(), 16, 16, 16, 16,
+        17, 17, 17, 17);
+  } else {
+    _action = bn::create_sprite_animate_action_forever(
+        _sprite.value(), 12, _sprite_item.value().tiles_item(), 0, 1, 2, 3, 4,
+        5, 6, 7);
+  }
+  _sprite.value().set_position(next_step);
+}
+
+void Person::_handle_ordering(bn::deque<int, 8>& order_queue, bool&,
+                              bool& purchased_this_frame,
+                              bn::vector<int, 16>&) {
+  _wait_time = _wait_time += 1;
+  if (_wait_time > _wait_max) {
+    purchased_this_frame = true;
+    _wait_time = 0;
+    _state = STATE::WALKING_TO_COUNTER;
+    order_queue.pop_front();
+    _action = bn::create_sprite_animate_action_forever(
+        _sprite.value(), 12, _sprite_item.value().tiles_item(), 0, 1, 2, 3, 4,
+        5, 6, 7);
+    _sprite.value().set_horizontal_flip(true);
+  }
+}
+
+void Person::_handle_walking_to_counter(bn::deque<int, 8>&, bool& waiting_spot,
+                                        bool&, bn::vector<int, 16>&) {
+  bn::fixed_point counter = waiting_spot ? COUNTER2 : COUNTER1;
+  bn::fixed_point next_step =
+      ti::get_next_step(_sprite.value().position(), counter, _speed);
+  _sprite.value().set_position(next_step);
+
+  if (counter.x() == next_step.x() && counter.y() == next_step.y()) {
+    _state = STATE::WAITING;
+    waiting_spot = !waiting_spot;
+    _action = bn::create_sprite_animate_action_forever(
+        _sprite.value(), 20, _sprite_item.value().tiles_item(), 16, 16, 16, 16,
+        17, 17, 17, 17);
+    _sprite.value().set_horizontal_flip(true);
+  }
+}
+
+void Person::_handle_waiting(bn::deque<int, 8>&, bool&, bool&,
+                             bn::vector<int, 16>&) {
+  _wait_time = _wait_time += 1;
+  if (_wait_time > _wait_max + 60) {
+    _wait_time = 0;
+    _state = STATE::WALKING_TO_DOOR;
+    _action = bn::create_sprite_animate_action_forever(
+        _sprite.value(), 12, _sprite_item.value().tiles_item(), 8, 9, 10, 11,
+        12, 13, 14, 15);
+    _sprite.value().set_horizontal_flip(false);
+  }
+}
+
+void Person::_handle_walking_to_door(bn::deque<int, 8>&, bool&, bool&,
+                                     bn::vector<int, 16>&) {
+  bn::fixed_point next_step =
+      ti::get_next_step(_sprite.value().position(), DOOR, _speed);
+  _sprite.value().set_position(next_step);
+
+  if (DOOR.x() == next_step.x() && DOOR.y() == next_step.y()) {
+    _state = STATE::EXITING;
+    _sprite.value().set_horizontal_flip(false);
+  }
+}
+
+void Person::_handle_exiting(bn::deque<int, 8>&, bool&, bool&,
+                             bn::vector<int, 16>&) {
+  bn::fixed_point next_step =
+      ti::get_next_step(_sprite.value().position(), OUTSIDE, _speed);
+  _sprite.value().set_position(next_step);
+  if (OUTSIDE.x() == next_step.x() && OUTSIDE.y() == next_step.y()) {
+    bool is_left = _random.get_int(10) > 5;
+    if (is_left) {
+      _state = STATE::WALKING_LEFT_W_COFFEE;
+      _sprite.value().set_horizontal_flip(true);
+    } else {
+      _state = STATE::WALKING_RIGHT_W_COFFEE;
+      _sprite.value().set_horizontal_flip(false);
+    }
+  }
+  _sprite.value().set_z_order(-300);
+}
+
+void Person::_handle_walking_right_passer(bn::deque<int, 8>&, bool&, bool&,
+                                          bn::vector<int, 16>&) {
+  bn::fixed_point next_step =
+      ti::get_next_step(_sprite.value().position(), RIGHT, _speed);
+  _sprite.value().set_position(next_step);
+  bool started_loitering = _try_start_loitering();
+  if (!started_loitering && RIGHT.x() == next_step.x() &&
+      RIGHT.y() == next_step.y()) {
+    _state = STATE::WALKING_LEFT;
+    _sprite.value().set_horizontal_flip(true);
+  }
+}
+
+void Person::_handle_walking_left_passer(bn::deque<int, 8>&, bool&, bool&,
+                                         bn::vector<int, 16>&) {
+  bn::fixed_point next_step =
+      ti::get_next_step(_sprite.value().position(), LEFT, _speed);
+  _sprite.value().set_position(next_step);
+  bool started_loitering = _try_start_loitering();
+  if (!started_loitering && LEFT.x() == next_step.x() &&
+      LEFT.y() == next_step.y()) {
+    _state = STATE::WALKING_RIGHT;
+    _sprite.value().set_horizontal_flip(false);
+  }
+}
+
+void Person::_handle_walking_left_with_coffee(bn::deque<int, 8>&, bool&, bool&,
+                                              bn::vector<int, 16>& types) {
+  bn::fixed_point next_step =
+      ti::get_next_step(_sprite.value().position(), LEFT, _speed);
+  _sprite.value().set_position(next_step);
+  bool started_loitering = _try_start_loitering();
+
+  if (!started_loitering && LEFT.x() == next_step.x() &&
+      LEFT.y() == next_step.y()) {
+    _state = STATE::WALKING_RIGHT;
+    int type_index = _random.get_int(types.size());
+    int next_type = types.at(type_index);
+    types.erase(types.begin() + type_index);
+    setStyle(static_cast<TYPE>(next_type), START::LEFT,
+             _sprite.value().position());
+    _sprite.value().set_horizontal_flip(false);
+  }
+}
+
+void Person::_handle_walking_right_with_coffee(bn::deque<int, 8>&, bool&, bool&,
+                                               bn::vector<int, 16>& types) {
+  bn::fixed_point next_step =
+      ti::get_next_step(_sprite.value().position(), RIGHT, _speed);
+  _sprite.value().set_position(next_step);
+  bool started_loitering = _try_start_loitering();
+
+  if (!started_loitering && RIGHT.x() == next_step.x() &&
+      RIGHT.y() == next_step.y()) {
+    _state = STATE::WALKING_LEFT;
+    int type_index = _random.get_int(types.size());
+    int next_type = types.at(type_index);
+    types.erase(types.begin() + type_index);
+    setStyle(static_cast<TYPE>(next_type), START::RIGHT,
+             _sprite.value().position());
+    _sprite.value().set_horizontal_flip(true);
+  }
+}
+
 /**
  * @brief Main state machine update for the Person (customer) object.
  *
@@ -310,236 +606,9 @@ bool Person::_update_loiter_overlay() {
  */
 void Person::update(bn::deque<int, 8>& order_queue, bool& waiting_spot,
                     bool& purchased_this_frame, bn::vector<int, 16>& types) {
-  if (_update_loiter_overlay()) {
-    // loiter overlay consumed this frame
-  } else if (_state == STATE::WALKING_RIGHT) {
-    bn::fixed_point next_step =
-        ti::get_next_step(_sprite.value().position(), OUTSIDE, _speed);
-    _sprite.value().set_position(next_step);
-    bool started_loitering = _try_start_loitering();
-    if (!started_loitering && OUTSIDE.x() == next_step.x() &&
-        OUTSIDE.y() == next_step.y()) {
-      if (_should_walk_by()) {
-        _state = STATE::WALKING_RIGHT_PASSER;
-        _sprite.value().set_horizontal_flip(false);
-        _action = bn::create_sprite_animate_action_forever(
-            _sprite.value(), 12, _sprite_item.value().tiles_item(), 0, 1, 2, 3,
-            4, 5, 6, 7);
-      } else {
-        _state = STATE::ENTERING;
-        _sprite.value().set_horizontal_flip(true);
-      }
-    }
-  } else if (_state == STATE::WALKING_LEFT) {
-    bn::fixed_point next_step =
-        ti::get_next_step(_sprite.value().position(), OUTSIDE, _speed);
-    _sprite.value().set_position(next_step);
-    bool started_loitering = _try_start_loitering();
-    if (!started_loitering && OUTSIDE.x() == next_step.x() &&
-        OUTSIDE.y() == next_step.y()) {
-      if (_should_walk_by()) {
-        _state = STATE::WALKING_LEFT_PASSER;
-        _sprite.value().set_horizontal_flip(true);
-        _action = bn::create_sprite_animate_action_forever(
-            _sprite.value(), 12, _sprite_item.value().tiles_item(), 0, 1, 2, 3,
-            4, 5, 6, 7);
-      } else {
-        // Arrived at the door from the left side, now enter from right
-        _state = STATE::ENTERING;
-        _sprite.value().set_horizontal_flip(true);
-      }
-    }
-  } else if (_state == STATE::ENTERING) {
-    bn::fixed_point next_step =
-        ti::get_next_step(_sprite.value().position(), DOOR, _speed);
-    _sprite.value().set_position(next_step);
-    if (DOOR.x() == next_step.x() && DOOR.y() == next_step.y()) {
-      // At the door, now walk to the queue start
-      _state = STATE::WALKING_TO_ORDER;
-      _sprite.value().set_horizontal_flip(true);
-    }
-  } else if (_state == STATE::WALKING_TO_ORDER) {
-    bn::fixed_point next_step =
-        ti::get_next_step(_sprite.value().position(), QUEUE_START, _speed);
-    _sprite.value().set_position(next_step);
-    if (QUEUE_START.x() == next_step.x() && QUEUE_START.y() == next_step.y()) {
-      // At the queue start, now join the queue
-      _state = STATE::JOINING_QUEUE;
-    }
-  } else if (_state == STATE::JOINING_QUEUE) {
-    bn::fixed_point next_step =
-        ti::get_next_step(_sprite.value().position(), TILL, _speed);
-
-    // check if in queue
-    int index = locate_in_queue(order_queue, _id);
-
-    if (index == -1) {
-      if (order_queue.size() >= 5) {
-        // angry and walks out
-        _state = STATE::WALKING_TO_DOOR;
-        _sprite.value().set_horizontal_flip(false);
-        return;
-      } else {
-        // add to queue
-        order_queue.push_back(_id);
-      }
-    } else {
-      // walk to spot in queue
-      next_step = ti::get_next_step(_sprite.value().position(),
-                                    LOCATIONS.at(index), _speed);
-    }
-
-    if (_sprite.value().position().x() == next_step.x() &&
-        _sprite.value().position().y() == next_step.y()) {
-      _state = STATE::WAITING_TO_ORDER;
-      _action = bn::create_sprite_animate_action_forever(
-          _sprite.value(), 20, _sprite_item.value().tiles_item(), 16, 16, 16,
-          16, 17, 17, 17, 17);
-      _sprite.value().set_horizontal_flip(true);
-    }
-
-    _sprite.value().set_position(next_step);
-  } else if (_state == STATE::WAITING_TO_ORDER) {
-    // get position in queue
-    int index = locate_in_queue(order_queue, _id);
-
-    // try to move up
-    bn::fixed_point next_step = ti::get_next_step(_sprite.value().position(),
-                                                  LOCATIONS.at(index), _speed);
-
-    // if next start ordering
-    if (_sprite.value().position().x() == next_step.x() &&
-        _sprite.value().position().y() == next_step.y()) {
-      if (index == 0) {
-        _state = STATE::ORDERING;
-      }
-      _action = bn::create_sprite_animate_action_forever(
-          _sprite.value(), 20, _sprite_item.value().tiles_item(), 16, 16, 16,
-          16, 17, 17, 17, 17);
-    } else {
-      _action = bn::create_sprite_animate_action_forever(
-          _sprite.value(), 12, _sprite_item.value().tiles_item(), 0, 1, 2, 3, 4,
-          5, 6, 7);
-    }
-    _sprite.value().set_position(next_step);
-  } else if (_state == STATE::ORDERING) {
-    _wait_time = _wait_time += 1;
-    if (_wait_time > _wait_max) {
-      purchased_this_frame = true;
-      _wait_time = 0;
-      _state = STATE::WALKING_TO_COUNTER;
-      order_queue.pop_front();
-      _action = bn::create_sprite_animate_action_forever(
-          _sprite.value(), 12, _sprite_item.value().tiles_item(), 0, 1, 2, 3, 4,
-          5, 6, 7);
-      _sprite.value().set_horizontal_flip(true);
-    }
-  } else if (_state == STATE::WALKING_TO_COUNTER) {
-    bn::fixed_point counter = COUNTER1;
-    if (waiting_spot) {
-      counter = COUNTER2;
-    }
-    bn::fixed_point next_step =
-        ti::get_next_step(_sprite.value().position(), counter, _speed);
-    _sprite.value().set_position(next_step);
-
-    if (counter.x() == next_step.x() && counter.y() == next_step.y()) {
-      // At the counter, now wait
-      _state = STATE::WAITING;
-      waiting_spot = !waiting_spot;
-      _action = bn::create_sprite_animate_action_forever(
-          _sprite.value(), 20, _sprite_item.value().tiles_item(), 16, 16, 16,
-          16, 17, 17, 17, 17);
-      _sprite.value().set_horizontal_flip(true);
-    }
-  } else if (_state == STATE::WAITING) {
-    _wait_time = _wait_time += 1;
-    if (_wait_time > _wait_max + 60) {
-      _wait_time = 0;
-      _state = STATE::WALKING_TO_DOOR;
-      _action = bn::create_sprite_animate_action_forever(
-          _sprite.value(), 12, _sprite_item.value().tiles_item(), 8, 9, 10, 11,
-          12, 13, 14, 15);
-      _sprite.value().set_horizontal_flip(false);
-    }
-  } else if (_state == STATE::WALKING_TO_DOOR) {
-    bn::fixed_point next_step =
-        ti::get_next_step(_sprite.value().position(), DOOR, _speed);
-    _sprite.value().set_position(next_step);
-
-    if (DOOR.x() == next_step.x() && DOOR.y() == next_step.y()) {
-      _state = STATE::EXITING;
-      _sprite.value().set_horizontal_flip(false);
-    }
-  } else if (_state == STATE::EXITING) {
-    bn::fixed_point next_step =
-        ti::get_next_step(_sprite.value().position(), OUTSIDE, _speed);
-    _sprite.value().set_position(next_step);
-    if (OUTSIDE.x() == next_step.x() && OUTSIDE.y() == next_step.y()) {
-      bool is_left = _random.get_int(10) > 5;
-      if (is_left) {
-        _state = STATE::WALKING_LEFT_W_COFFEE;
-        _sprite.value().set_horizontal_flip(true);
-      } else {
-        _state = STATE::WALKING_RIGHT_W_COFFEE;
-        _sprite.value().set_horizontal_flip(false);
-      }
-    }
-    _sprite.value().set_z_order(-300);
-  } else if (_state == STATE::WALKING_RIGHT_PASSER) {
-    bn::fixed_point next_step =
-        ti::get_next_step(_sprite.value().position(), RIGHT, _speed);
-    _sprite.value().set_position(next_step);
-    bool started_loitering = _try_start_loitering();
-    if (!started_loitering && RIGHT.x() == next_step.x() &&
-        RIGHT.y() == next_step.y()) {
-      _state = STATE::WALKING_LEFT;
-      _sprite.value().set_horizontal_flip(true);
-    }
-  } else if (_state == STATE::WALKING_LEFT_PASSER) {
-    bn::fixed_point next_step =
-        ti::get_next_step(_sprite.value().position(), LEFT, _speed);
-    _sprite.value().set_position(next_step);
-    bool started_loitering = _try_start_loitering();
-    if (!started_loitering && LEFT.x() == next_step.x() &&
-        LEFT.y() == next_step.y()) {
-      _state = STATE::WALKING_RIGHT;
-      _sprite.value().set_horizontal_flip(false);
-    }
-  } else if (_state == STATE::WALKING_LEFT_W_COFFEE) {
-    bn::fixed_point next_step =
-        ti::get_next_step(_sprite.value().position(), LEFT, _speed);
-    _sprite.value().set_position(next_step);
-    bool started_loitering = _try_start_loitering();
-
-    if (!started_loitering && LEFT.x() == next_step.x() &&
-        LEFT.y() == next_step.y()) {
-      // respawn on right
-      _state = STATE::WALKING_RIGHT;
-      int type_index = _random.get_int(types.size());
-      int next_type = types.at(type_index);
-      types.erase(types.begin() + type_index);
-      setStyle(static_cast<TYPE>(next_type), START::LEFT,
-               _sprite.value().position());
-      _sprite.value().set_horizontal_flip(false);
-    }
-  } else if (_state == STATE::WALKING_RIGHT_W_COFFEE) {
-    bn::fixed_point next_step =
-        ti::get_next_step(_sprite.value().position(), RIGHT, _speed);
-    _sprite.value().set_position(next_step);
-    bool started_loitering = _try_start_loitering();
-
-    if (!started_loitering && RIGHT.x() == next_step.x() &&
-        RIGHT.y() == next_step.y()) {
-      // respawn on left
-      _state = STATE::WALKING_LEFT;
-      int type_index = _random.get_int(types.size());
-      int next_type = types.at(type_index);
-      types.erase(types.begin() + type_index);
-      setStyle(static_cast<TYPE>(next_type), START::RIGHT,
-               _sprite.value().position());
-      _sprite.value().set_horizontal_flip(true);
-    }
+  if (!_update_loiter_overlay()) {
+    const StateHandler handler = _state_handlers[_state_index(_state)];
+    (this->*handler)(order_queue, waiting_spot, purchased_this_frame, types);
   }
 
   _sprite.value().set_z_order(-_sprite.value().y().integer());
