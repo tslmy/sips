@@ -35,8 +35,16 @@ To build the source code and test code in this repository, you'll need (macOS in
 
 - [CMake](https://cmake.org/) (Available via Homebrew.)
 - [devkitARM](https://devkitpro.org/wiki/Getting_Started) (You'll need to install it using their own fork of Pacman.)
-- [Butano Engine](https://github.com/GValiente/butano) (Clone it along side with this repo.)
+
+* [Git](https://git-scm.com/) (Don't just download the codebase as zip; it won't compile, because we need submodules.)
+
 * [just](https://just.systems/) (For simplifying frequently-used commands.)
+
+Clone with submodules:
+
+```bash
+git clone --recurse-submodules https://github.com/tslmy/sips.git
+```
 
 ### Build
 

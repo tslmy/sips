@@ -27,7 +27,9 @@
 #---------------------------------------------------------------------------------------------------------------------
 TARGET      :=  $(notdir $(CURDIR))
 BUILD       :=  build
-LIBBUTANO   :=  ../butano/butano
+PROJECT_ROOT := $(realpath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
+LIBBUTANO   ?= $(PROJECT_ROOT)/external/butano/butano
+LIBBUTANO_FALLBACKS := $(PROJECT_ROOT)/external/butano/butano $(PROJECT_ROOT)/../butano/butano $(PROJECT_ROOT)/.deps/butano/butano
 PYTHON      :=  /opt/homebrew/Caskroom/miniforge/base/bin/python3
 SOURCES     :=  src
 INCLUDES    :=  include
@@ -46,10 +48,18 @@ USERBUILD   :=
 EXTTOOL     :=  
 
 #---------------------------------------------------------------------------------------------------------------------
-# Export absolute butano path:
+# Resolve Butano path:
+# - Use LIBBUTANO if provided and valid.
+# - Otherwise, auto-discover from fallback locations.
 #---------------------------------------------------------------------------------------------------------------------
+LIBBUTANO_FOUND := $(firstword $(foreach path,$(LIBBUTANO) $(LIBBUTANO_FALLBACKS),$(if $(wildcard $(path)/butano.mak),$(path))))
+
+ifeq ($(LIBBUTANO_FOUND),)
+  $(error Could not locate Butano. Run `just setup-butano` (git submodule init) or set LIBBUTANO=/absolute/path/to/butano)
+endif
+
 ifndef LIBBUTANOABS
-	export LIBBUTANOABS	:=	$(realpath $(LIBBUTANO))
+	export LIBBUTANOABS := $(realpath $(LIBBUTANO_FOUND))
 endif
 
 #---------------------------------------------------------------------------------------------------------------------
