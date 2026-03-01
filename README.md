@@ -11,16 +11,17 @@ A chill idle game for GBA.
 Originally built by [Jono Shields](https://jonoshields.com/) over WinterJam23, this fork has added the following changes:
 
 * UX
-    * If you attempt to buy something you can't afford, the cursor will shake and play a sound.
-    * The cursor will now skip already-purchased items.
+  * If you attempt to buy something you can't afford, the cursor will shake and play a sound.
+  * The cursor will now skip already-purchased items.
+  * The menu now slides in & out from the top.
 * NPC behavior
   * People may simply pass by, not coming in for a drink.
   * People may loiter on the street for a short while.
   * People now walk (or loiter) at random positions in the vertical (y-axis) direction.
 * Dev-only
-    * Adopted [Google C++ Style](https://google.github.io/styleguide/cppguide.html), automatically enforced via pre-commit hooks.
-    * Replaced vanilla `make` with `CMake` as the build system.
-    * Added unit tests. (See "Testing" below.)
+  * Adopted [Google C++ Style](https://google.github.io/styleguide/cppguide.html), automatically enforced via pre-commit hooks.
+  * Replaced vanilla `make` with `CMake` as the build system.
+  * Added unit tests. (See "Testing" below.)
 
 
 ## How to play
