@@ -19,6 +19,7 @@ build:
 deps:
     cd tests && \
     rm -rf build/RelWithDebInfo && \
+    uvx conan profile detect --force && \
     uvx conan install . --build=missing -s build_type=RelWithDebInfo -s compiler.cppstd=23
 
 # Build test harness
