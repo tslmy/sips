@@ -32,16 +32,11 @@ To build the source code and test code in this repository, you'll need (macOS in
 - [CMake](https://cmake.org/) (Available via Homebrew.)
 - [devkitARM](https://devkitpro.org/wiki/Getting_Started) (You'll need to install it using their own fork of Pacman.)
 - [Butano Engine](https://github.com/GValiente/butano) (Clone it along side with this repo.)
+* [just](https://just.systems/) (For simplifying frequently-used commands.)
 
 ### Build
 
-To build the GBA ROM, run:
-
-```
-make -j8
-```
-
-This will create `sips.gba` in the project root, ready for use in a GBA emulator.
+To build the GBA ROM, run `just build`. This will create `sips.gba` in the project root, ready for use in a GBA emulator.
 
 ### Testing
 
