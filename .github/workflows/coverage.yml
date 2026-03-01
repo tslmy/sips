@@ -26,39 +26,39 @@ jobs:
       - name: Install dependencies
         run: |
           cd tests
-          conan install . --build=missing
+          conan install . --build=missing -s build_type=RelWithDebInfo
 
       - name: Configure CMake with Coverage
         run: |
           cd tests
-          mkdir -p build && cd build
-          cmake .. -G "Unix Makefiles" \
-            -DCMAKE_TOOLCHAIN_FILE=../build/Release/generators/conan_toolchain.cmake \
+          cmake -S . -B build/RelWithDebInfo -G "Unix Makefiles" \
+            -DCMAKE_TOOLCHAIN_FILE=build/RelWithDebInfo/generators/conan_toolchain.cmake \
             -DCMAKE_POLICY_DEFAULT_CMP0091=NEW \
-            -DCMAKE_BUILD_TYPE=Coverage \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_CXX_FLAGS="--coverage" \
             -DCMAKE_EXE_LINKER_FLAGS="--coverage"
 
       - name: Build
         run: |
-          cd tests/build
-          cmake --build . -j$(nproc)
+          cd tests
+          cmake --build build/RelWithDebInfo -j$(nproc)
 
       - name: Run Tests
         run: |
           cd tests
-          ./build/test_helpers
+          ./build/RelWithDebInfo/test_helpers
 
       - name: Generate Coverage Report
         run: |
-          cd tests/build
+          cd tests/build/RelWithDebInfo
           lcov --capture --directory . --output-file coverage.info --ignore-errors inconsistent,source,format
-          lcov --remove coverage.info '*_deps*' --output-file coverage.info --ignore-errors inconsistent,corrupt
-          lcov --summary coverage.info --ignore-errors inconsistent,corrupt
+          ROOT_DIR=$(cd ../../.. && pwd)
+          lcov --extract coverage.info "$ROOT_DIR/src/*" "$ROOT_DIR/include/*" --output-file coverage.info --ignore-errors inconsistent,corrupt,format,unused
+          lcov --summary coverage.info --ignore-errors inconsistent,corrupt,format
 
       - name: Upload to Codecov
         uses: codecov/codecov-action@v4
         with:
-          files: ./tests/build/coverage.info
+          files: ./tests/build/RelWithDebInfo/coverage.info
           flags: unittests
           token: ${{ secrets.CODECOV_TOKEN }}
