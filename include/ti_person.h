@@ -44,9 +44,8 @@ enum class STATE {
   WALKING_TO_DOOR = 11,
   EXITING = 12,
   JOINING_QUEUE = 13,
-  LOITERING = 14,
-  WALKING_LEFT_PASSER = 15,
-  WALKING_RIGHT_PASSER = 16,
+  WALKING_LEFT_PASSER = 14,
+  WALKING_RIGHT_PASSER = 15,
 };
 
 /**
@@ -102,20 +101,21 @@ class Person {
   void setStyle(TYPE type, START start, bn::fixed_point pos);
   int _id;
   bool _has_loitered = false;
+  bool _is_loitering = false;
   int _loiter_time = 0;
   int _loiter_duration_frames = 0;
-  STATE _loiter_resume_state = STATE::WALKING_RIGHT;
   bn::fixed_point _loiter_target_position = bn::fixed_point(0, 0);
   bool _loiter_in_position = false;
   static int _active_loiterers;
   static constexpr int _max_loiterers = 3;
   static constexpr int _walk_by_chance = 4;  // 1 in 4 chance to skip entering
-  bool _try_start_loitering(STATE resume_state);
-  void _begin_loitering(STATE resume_state);
+  bool _try_start_loitering();
+  void _begin_loitering();
   void _stop_loitering();
-  bn::fixed_point _random_street_loiter_point(STATE resume_state);
+  bn::fixed_point _random_street_loiter_point();
   bn::fixed _randomized_street_y(bn::fixed base_y);
   bool _should_walk_by();
+  bool _update_loiter_overlay();
 
  public:
   /**

@@ -145,6 +145,7 @@ void Person::setStyle(TYPE type, START start, bn::fixed_point pos) {
   _sprite_item = *TYPE_TO_SPRITE[static_cast<int>(type)];
   _sprite = _create_sprite(pos, start != START::RIGHT, _sprite_item.value());
   _has_loitered = false;
+  _is_loitering = false;
   _loiter_time = 0;
   _loiter_duration_frames = 0;
   _loiter_in_position = false;
@@ -156,11 +157,11 @@ void Person::setStyle(TYPE type, START start, bn::fixed_point pos) {
 
 TYPE Person::get_type() { return _type; }
 
-bn::fixed_point Person::_random_street_loiter_point(STATE resume_state) {
+bn::fixed_point Person::_random_street_loiter_point() {
   bn::fixed_point current_pos = _sprite.value().position();
   bn::fixed target_x = current_pos.x();
 
-  switch (resume_state) {
+  switch (_state) {
     case STATE::WALKING_LEFT:
       target_x = OUTSIDE.x();
       break;
@@ -214,28 +215,26 @@ bool Person::_should_walk_by() {
   return _random.get_int(_walk_by_chance) == 0;
 }
 
-bool Person::_try_start_loitering(STATE resume_state) {
-  if (_has_loitered || _state == STATE::LOITERING ||
-      _active_loiterers >= _max_loiterers) {
+bool Person::_try_start_loitering() {
+  if (_has_loitered || _is_loitering || _active_loiterers >= _max_loiterers) {
     return false;
   }
 
   constexpr int LOITER_CHANCE_FRAMES = 360;  // ~6 seconds average between tries
   if (_random.get_int(LOITER_CHANCE_FRAMES) == 0) {
-    _begin_loitering(resume_state);
+    _begin_loitering();
     return true;
   }
 
   return false;
 }
 
-void Person::_begin_loitering(STATE resume_state) {
+void Person::_begin_loitering() {
   _has_loitered = true;
-  _state = STATE::LOITERING;
-  _loiter_resume_state = resume_state;
+  _is_loitering = true;
   _loiter_time = 0;
   _loiter_duration_frames = (_random.get_int(9) + 2) * 60;
-  _loiter_target_position = _random_street_loiter_point(resume_state);
+  _loiter_target_position = _random_street_loiter_point();
   _loiter_in_position = false;
   _active_loiterers++;
   bool already_at_target =
@@ -259,17 +258,43 @@ void Person::_stop_loitering() {
   if (_active_loiterers > 0) {
     --_active_loiterers;
   }
-  _state = _loiter_resume_state;
+  _is_loitering = false;
   _loiter_time = 0;
   _loiter_duration_frames = 0;
   _loiter_in_position = false;
-  bool face_left = _loiter_resume_state == STATE::WALKING_LEFT ||
-                   _loiter_resume_state == STATE::WALKING_LEFT_W_COFFEE ||
-                   _loiter_resume_state == STATE::WALKING_LEFT_PASSER;
+  bool face_left = _state == STATE::WALKING_LEFT ||
+                   _state == STATE::WALKING_LEFT_W_COFFEE ||
+                   _state == STATE::WALKING_LEFT_PASSER;
   _sprite.value().set_horizontal_flip(face_left);
   _action = bn::create_sprite_animate_action_forever(
       _sprite.value(), 12, _sprite_item.value().tiles_item(), 0, 1, 2, 3, 4, 5,
       6, 7);
+}
+
+bool Person::_update_loiter_overlay() {
+  if (!_is_loitering) {
+    return false;
+  }
+
+  if (_loiter_in_position) {
+    _loiter_time += 1;
+    if (_loiter_duration_frames > 0 &&
+        _loiter_time >= _loiter_duration_frames) {
+      _stop_loitering();
+    }
+  } else {
+    bn::fixed_point next_step = ti::get_next_step(
+        _sprite.value().position(), _loiter_target_position, _speed);
+    _sprite.value().set_position(next_step);
+    if (next_step.x() == _loiter_target_position.x() &&
+        next_step.y() == _loiter_target_position.y()) {
+      _loiter_in_position = true;
+      _action = bn::create_sprite_animate_action_forever(
+          _sprite.value(), 20, _sprite_item.value().tiles_item(), 16, 16, 16,
+          16, 17, 17, 17, 17);
+    }
+  }
+  return _is_loitering;
 }
 
 /**
@@ -285,11 +310,13 @@ void Person::_stop_loitering() {
  */
 void Person::update(bn::deque<int, 8>& order_queue, bool& waiting_spot,
                     bool& purchased_this_frame, bn::vector<int, 16>& types) {
-  if (_state == STATE::WALKING_RIGHT) {
+  if (_update_loiter_overlay()) {
+    // loiter overlay consumed this frame
+  } else if (_state == STATE::WALKING_RIGHT) {
     bn::fixed_point next_step =
         ti::get_next_step(_sprite.value().position(), OUTSIDE, _speed);
     _sprite.value().set_position(next_step);
-    bool started_loitering = _try_start_loitering(STATE::WALKING_RIGHT);
+    bool started_loitering = _try_start_loitering();
     if (!started_loitering && OUTSIDE.x() == next_step.x() &&
         OUTSIDE.y() == next_step.y()) {
       if (_should_walk_by()) {
@@ -307,7 +334,7 @@ void Person::update(bn::deque<int, 8>& order_queue, bool& waiting_spot,
     bn::fixed_point next_step =
         ti::get_next_step(_sprite.value().position(), OUTSIDE, _speed);
     _sprite.value().set_position(next_step);
-    bool started_loitering = _try_start_loitering(STATE::WALKING_LEFT);
+    bool started_loitering = _try_start_loitering();
     if (!started_loitering && OUTSIDE.x() == next_step.x() &&
         OUTSIDE.y() == next_step.y()) {
       if (_should_walk_by()) {
@@ -435,25 +462,6 @@ void Person::update(bn::deque<int, 8>& order_queue, bool& waiting_spot,
           12, 13, 14, 15);
       _sprite.value().set_horizontal_flip(false);
     }
-  } else if (_state == STATE::LOITERING) {
-    if (!_loiter_in_position) {
-      bn::fixed_point next_step = ti::get_next_step(
-          _sprite.value().position(), _loiter_target_position, _speed);
-      _sprite.value().set_position(next_step);
-      if (next_step.x() == _loiter_target_position.x() &&
-          next_step.y() == _loiter_target_position.y()) {
-        _loiter_in_position = true;
-        _action = bn::create_sprite_animate_action_forever(
-            _sprite.value(), 20, _sprite_item.value().tiles_item(), 16, 16, 16,
-            16, 17, 17, 17, 17);
-      }
-    } else {
-      _loiter_time += 1;
-      if (_loiter_duration_frames > 0 &&
-          _loiter_time >= _loiter_duration_frames) {
-        _stop_loitering();
-      }
-    }
   } else if (_state == STATE::WALKING_TO_DOOR) {
     bn::fixed_point next_step =
         ti::get_next_step(_sprite.value().position(), DOOR, _speed);
@@ -482,7 +490,7 @@ void Person::update(bn::deque<int, 8>& order_queue, bool& waiting_spot,
     bn::fixed_point next_step =
         ti::get_next_step(_sprite.value().position(), RIGHT, _speed);
     _sprite.value().set_position(next_step);
-    bool started_loitering = _try_start_loitering(STATE::WALKING_RIGHT_PASSER);
+    bool started_loitering = _try_start_loitering();
     if (!started_loitering && RIGHT.x() == next_step.x() &&
         RIGHT.y() == next_step.y()) {
       _state = STATE::WALKING_LEFT;
@@ -492,7 +500,7 @@ void Person::update(bn::deque<int, 8>& order_queue, bool& waiting_spot,
     bn::fixed_point next_step =
         ti::get_next_step(_sprite.value().position(), LEFT, _speed);
     _sprite.value().set_position(next_step);
-    bool started_loitering = _try_start_loitering(STATE::WALKING_LEFT_PASSER);
+    bool started_loitering = _try_start_loitering();
     if (!started_loitering && LEFT.x() == next_step.x() &&
         LEFT.y() == next_step.y()) {
       _state = STATE::WALKING_RIGHT;
@@ -502,7 +510,7 @@ void Person::update(bn::deque<int, 8>& order_queue, bool& waiting_spot,
     bn::fixed_point next_step =
         ti::get_next_step(_sprite.value().position(), LEFT, _speed);
     _sprite.value().set_position(next_step);
-    bool started_loitering = _try_start_loitering(STATE::WALKING_LEFT_W_COFFEE);
+    bool started_loitering = _try_start_loitering();
 
     if (!started_loitering && LEFT.x() == next_step.x() &&
         LEFT.y() == next_step.y()) {
@@ -519,8 +527,7 @@ void Person::update(bn::deque<int, 8>& order_queue, bool& waiting_spot,
     bn::fixed_point next_step =
         ti::get_next_step(_sprite.value().position(), RIGHT, _speed);
     _sprite.value().set_position(next_step);
-    bool started_loitering =
-        _try_start_loitering(STATE::WALKING_RIGHT_W_COFFEE);
+    bool started_loitering = _try_start_loitering();
 
     if (!started_loitering && RIGHT.x() == next_step.x() &&
         RIGHT.y() == next_step.y()) {
