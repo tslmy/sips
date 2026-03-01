@@ -45,31 +45,10 @@ This will create `sips.gba` in the project root, ready for use in a GBA emulator
 
 ### Testing
 
-This project uses [Catch2](https://github.com/catchorg/Catch2) for unit tests, managed via [Conan](https://conan.io/). Conan is a Python program. You'd probably want to install it via `pip install conan`, but since I use `uv` for Python, I just prepend every `conan` command with `uvx` and get on with my day.
+This project uses [Catch2](https://github.com/catchorg/Catch2) for unit tests. This dependency is managed via [Conan](https://conan.io/). Since Conan is written in Python and I use `uvx` to manage everything with Python, I use `uvx` to run `conan` without explicitly installing it, too.
 
-1. **Prepare dependencies with Conan:**
+Ensure you have these commands installed: `just`, `uv`. On macOS, just run `brew install just uv`.
 
-    ```sh
-    cd tests
-    uvx conan install . --build=missing
-    ```
+Run `just test` to build and run tests.
 
-2. **Build the host-side test harness:**
-
-    ```sh
-    cd tests
-    mkdir -p build_test && cd build_test
-    cmake .. -G "Unix Makefiles" \
-        -DCMAKE_TOOLCHAIN_FILE=../build/Release/generators/conan_toolchain.cmake \
-        -DCMAKE_POLICY_DEFAULT_CMP0091=NEW \
-        -DCMAKE_BUILD_TYPE=Release
-    cmake --build . -j8
-    ```
-
-3. **Run the tests:**
-
-    ```sh
-    ./tests/build_test/test_helpers
-    ```
-
-    All logic tests will execute and print results in the terminal.
+See `justfile` for the full commands.
