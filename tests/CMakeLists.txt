@@ -15,7 +15,10 @@ add_executable(test_helpers
 
 target_link_libraries(test_helpers PRIVATE Catch2::Catch2WithMain)
 
-target_compile_definitions(test_helpers PRIVATE TI_HOST_TEST_MATH=1)
+target_compile_definitions(test_helpers PRIVATE
+    TI_HOST_TEST_MATH=1
+    BN_CFG_ASSERT_ENABLED=false
+)
 
 target_include_directories(test_helpers PRIVATE 
     ${Catch2_INCLUDE_DIRS}
