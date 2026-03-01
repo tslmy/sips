@@ -572,6 +572,5 @@ void Person::update(bn::deque<int, 8>& order_queue, bool& waiting_spot,
   if (_action.has_value() && !_action.value().done()) {
     _action.value().update();
   }
-  _random.get();
 }
 }  // namespace ti
