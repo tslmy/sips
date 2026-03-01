@@ -1,5 +1,5 @@
 // test_helpers.cpp
-// Unit tests for ti_helpers using Catch2, with mocks for Butano types.
+// Unit tests for ti_helpers using Catch2.
 
 #include <catch2/catch_all.hpp>
 #include <cmath>  // for std::abs
@@ -13,8 +13,10 @@ TEST_CASE("get_next_step: normal movement toward target", "[helpers]") {
   bn::fixed speed(3);
   bn::fixed_point result = ti::get_next_step(from, to, speed);
 
-  REQUIRE(bn::abs(result.x() - to.x()) < bn::abs(from.x() - to.x()));
-  REQUIRE(bn::abs(result.y() - to.y()) < bn::abs(from.y() - to.y()));
+  REQUIRE(std::abs((result.x() - to.x()).integer()) <
+          std::abs((from.x() - to.x()).integer()));
+  REQUIRE(std::abs((result.y() - to.y()).integer()) <
+          std::abs((from.y() - to.y()).integer()));
   REQUIRE(!(result.x() == to.x() && result.y() == to.y()));
 }
 

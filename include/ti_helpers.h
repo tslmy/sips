@@ -11,7 +11,6 @@
 
 #include "bn_fixed.h"
 #include "bn_fixed_point.h"
-#include "bn_vector.h"
 
 namespace ti {
 /**
