@@ -34,29 +34,33 @@ test-build:
     cmake --build build/RelWithDebInfo -j{{_jobs}}
 
 # Run tests with coverage
-# -----------------------
-# We capture a `coverage.base.raw.info` first to account for all code files. This report will say all files have 0% coverage.
-# Then we run the tests and capture `coverage.run.raw.info` to see what was actually executed. Since `./test_helpers` is built with only a subset of project files,
-# a lot of them will simply not appear in this report.
-# Both `*.raw.info` files will include code from `external/` and `tests/`, so we then filter them to only include source and header files from the main project (`src/` and `include/`).
-# Finally, we combine the filtered base and run reports into `coverage.info` and print a summary.
+[working-directory: "tests/build/RelWithDebInfo"]
 test: deps test-build
-    cd tests/build/RelWithDebInfo && \
-    rm -f coverage.base.raw.info coverage.run.raw.info coverage.base.info coverage.run.info coverage.info && \
-    lcov --capture --initial --directory . --output-file "coverage.base.raw.info" --ignore-errors inconsistent,source,format && \
-    ./test_helpers && \
-    lcov --capture --directory . --output-file "coverage.run.raw.info" --ignore-errors inconsistent,source,format && \
-    ROOT_DIR=$(cd ../../.. && pwd) && \
+    rm -f coverage.base.raw.info coverage.run.raw.info coverage.base.info coverage.run.info coverage.info
+
+    # We capture a `coverage.base.raw.info` first to account for all code files. This report will say all files have 0% coverage.
+    lcov --capture --initial --directory . --output-file "coverage.base.raw.info" --ignore-errors inconsistent,source,format
+    
+    # Then we run the tests and capture `coverage.run.raw.info` to see what was actually executed. Since `./test_helpers` is built with only a subset of project files,
+    # a lot of them will simply not appear in this report.
+    ./test_helpers
+    lcov --capture --directory . --output-file "coverage.run.raw.info" --ignore-errors inconsistent,source,format
+    
+    # Both `*.raw.info` files will include code from `external/` and `tests/`, 
+    # so we then filter them to only include source and header files from the main project (`src/` and `include/`).
+    ROOT_DIR=$(cd ../../.. && pwd)
     lcov --extract "coverage.base.raw.info" \
          "${ROOT_DIR}/src/*" "${ROOT_DIR}/include/*" \
          --output-file "coverage.base.info" \
-         --ignore-errors inconsistent,corrupt,format,unused && \
+         --ignore-errors inconsistent,corrupt,format,unused
     lcov --extract "coverage.run.raw.info" \
          "${ROOT_DIR}/src/*" "${ROOT_DIR}/include/*" \
          --output-file "coverage.run.info" \
-         --ignore-errors inconsistent,corrupt,format,unused && \
+         --ignore-errors inconsistent,corrupt,format,unused
+
+    # Finally, we combine the filtered base and run reports into `coverage.info` and print a summary.
     lcov --add-tracefile "coverage.base.info" \
          --add-tracefile "coverage.run.info" \
          --output-file "coverage.info" \
-         --ignore-errors inconsistent,source,format && \
+         --ignore-errors inconsistent,source,format
     lcov --summary "coverage.info" --ignore-errors inconsistent,corrupt,format
