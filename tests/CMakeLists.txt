@@ -49,13 +49,11 @@ endif()
 target_link_libraries(test_helpers PRIVATE Catch2::Catch2WithMain)
 
 target_compile_definitions(test_helpers PRIVATE
-    TI_HOST_TEST_MATH=1
     BN_CFG_ASSERT_ENABLED=false
 )
 
 if(TARGET coverage_objects)
     target_compile_definitions(coverage_objects PRIVATE
-        TI_HOST_TEST_MATH=1
         BN_CFG_ASSERT_ENABLED=false
     )
 
