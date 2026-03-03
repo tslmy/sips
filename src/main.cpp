@@ -417,50 +417,34 @@ int main() {
     // Handle L/R cycling when focused
     if (focused_person && focused_person->is_focused()) {
       // L cycles left, R cycles right
-      if (bn::keypad::l_pressed() && !bn::keypad::r_pressed()) {
-        // Find person to the left with the closest x position
+      if ((bn::keypad::l_pressed() && !bn::keypad::r_pressed()) ||
+          (bn::keypad::r_pressed() && !bn::keypad::l_pressed())) {
+        bool going_left = bn::keypad::l_pressed();
         bn::fixed current_x = focused_person->get_shadow_position().x();
-        ti::Person *left_person = nullptr;
-        bn::fixed closest_x = bn::fixed(-32767);
+        ti::Person *next_person = nullptr;
+        bn::fixed closest_x = going_left ? bn::fixed(-32767) : bn::fixed(32767);
 
         for (int i = 0; i < people.size(); i++) {
           if (popularity_level > i && people.at(i).is_visible() &&
               &people.at(i) != focused_person) {
             bn::fixed person_x = people.at(i).get_shadow_position().x();
-            // Find person with x < current_x that is closest to current_x
-            if (person_x < current_x && person_x > closest_x) {
-              closest_x = person_x;
-              left_person = &people.at(i);
+            if (going_left) {
+              if (person_x < current_x && person_x > closest_x) {
+                closest_x = person_x;
+                next_person = &people.at(i);
+              }
+            } else {
+              if (person_x > current_x && person_x < closest_x) {
+                closest_x = person_x;
+                next_person = &people.at(i);
+              }
             }
           }
         }
 
-        if (left_person) {
+        if (next_person) {
           focused_person->set_focused(false);
-          focused_person = left_person;
-          focused_person->set_focused(true);
-        }
-      } else if (bn::keypad::r_pressed() && !bn::keypad::l_pressed()) {
-        // Find person to the right with the closest x position
-        bn::fixed current_x = focused_person->get_shadow_position().x();
-        ti::Person *right_person = nullptr;
-        bn::fixed closest_x = bn::fixed(32767);
-
-        for (int i = 0; i < people.size(); i++) {
-          if (popularity_level > i && people.at(i).is_visible() &&
-              &people.at(i) != focused_person) {
-            bn::fixed person_x = people.at(i).get_shadow_position().x();
-            // Find person with x > current_x that is closest to current_x
-            if (person_x > current_x && person_x < closest_x) {
-              closest_x = person_x;
-              right_person = &people.at(i);
-            }
-          }
-        }
-
-        if (right_person) {
-          focused_person->set_focused(false);
-          focused_person = right_person;
+          focused_person = next_person;
           focused_person->set_focused(true);
         }
       }
