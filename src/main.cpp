@@ -286,7 +286,7 @@ int main() {
     }
 
     else {
-      if (bn::keypad::a_pressed()) {
+      if (bn::keypad::a_pressed() && focused_person == nullptr) {
         wishlist_menu.show(purchased);
       }
     }
