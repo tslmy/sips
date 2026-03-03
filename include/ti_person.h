@@ -220,7 +220,8 @@ class Person {
   void update(bn::deque<int, 8> &order_queue, bool &waiting_spot,
               bool &purchased_this_frame, bn::vector<int, 16> &types);
 
-  int get_id();
+  int get_id() const;
+  bn::fixed_point get_shadow_position() const;
   /**
    * @brief Returns the current state of this person.
    */

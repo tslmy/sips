@@ -67,6 +67,57 @@ bn::sprite_ptr _create_shadow(bn::fixed_point position) {
 }  // namespace
 
 namespace ti {
+int Person::get_id() const { return _id; }
+
+bn::fixed_point Person::get_shadow_position() const {
+  return _shadow.position();
+}
+// Helper function to check if two shadows overlap (simple bounding box)
+static bool shadows_overlap(const bn::sprite_ptr& a, const bn::sprite_ptr& b) {
+  bn::fixed_point apos = a.position();
+  bn::fixed_point bpos = b.position();
+  // Assuming shadow sprite is 16x8 px, adjust as needed
+  constexpr int SHADOW_W = 16;
+  constexpr int SHADOW_H = 8;
+  bn::fixed ax1 = apos.x() - SHADOW_W / 2;
+  bn::fixed ay1 = apos.y() - SHADOW_H / 2;
+  bn::fixed ax2 = apos.x() + SHADOW_W / 2;
+  bn::fixed ay2 = apos.y() + SHADOW_H / 2;
+  bn::fixed bx1 = bpos.x() - SHADOW_W / 2;
+  bn::fixed by1 = bpos.y() - SHADOW_H / 2;
+  bn::fixed bx2 = bpos.x() + SHADOW_W / 2;
+  bn::fixed by2 = bpos.y() + SHADOW_H / 2;
+  return ax1 < bx2 && ax2 > bx1 && ay1 < by2 && ay2 > by1;
+}
+
+// Checks if moving to next_shadow_pos would collide with any other person's
+// shadow
+static bool shadow_would_collide(const bn::fixed_point& next_shadow_pos,
+                                 int self_id,
+                                 const bn::vector<Person*, 16>& people) {
+  // Create a temp shadow sprite for collision check
+  // (We only need position, not actual sprite)
+  for (const Person* other : people) {
+    if (!other) continue;
+    if (other->get_id() == self_id) continue;
+    bn::fixed_point other_pos = other->get_shadow_position();
+    // Simple bounding box check
+    constexpr int SHADOW_W = 16;
+    constexpr int SHADOW_H = 8;
+    bn::fixed ax1 = next_shadow_pos.x() - SHADOW_W / 2;
+    bn::fixed ay1 = next_shadow_pos.y() - SHADOW_H / 2;
+    bn::fixed ax2 = next_shadow_pos.x() + SHADOW_W / 2;
+    bn::fixed ay2 = next_shadow_pos.y() + SHADOW_H / 2;
+    bn::fixed bx1 = other_pos.x() - SHADOW_W / 2;
+    bn::fixed by1 = other_pos.y() - SHADOW_H / 2;
+    bn::fixed bx2 = other_pos.x() + SHADOW_W / 2;
+    bn::fixed by2 = other_pos.y() + SHADOW_H / 2;
+    if (ax1 < bx2 && ax2 > bx1 && ay1 < by2 && ay2 > by1) {
+      return true;
+    }
+  }
+  return false;
+}
 
 namespace {
 constexpr const bn::sprite_item* TYPE_TO_SPRITE[] = {
@@ -386,7 +437,14 @@ bool Person::_update_loiter_overlay() {
 bool Person::_advance_to(const bn::fixed_point& target, bool may_loiter) {
   bn::fixed_point next_step =
       ti::get_next_step(_sprite.value().position(), target, _speed);
-  _sprite.value().set_position(next_step);
+  // Calculate next shadow position
+  bn::fixed_point next_shadow_pos = next_step;
+  next_shadow_pos.set_y(next_shadow_pos.y() + 15);
+  // TODO: Access all people for collision check.
+  if (!shadow_would_collide(next_shadow_pos, _id, {})) {
+    _sprite.value().set_position(next_step);
+  }
+  // else: do not move if collision would occur
   if (may_loiter && _try_start_loitering()) {
     return false;
   }
