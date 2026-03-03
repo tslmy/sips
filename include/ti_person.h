@@ -234,8 +234,6 @@ class Person {
   bn::fixed_point LEFT = bn::fixed_point(-140, 60);
   bn::fixed_point RIGHT = bn::fixed_point(180, 60);
   bn::fixed_point QUEUE_START = bn::fixed_point(0, 24);
-
-  bn::vector<bn::fixed_point, 5> LOCATIONS;
 };
 }  // namespace ti
 

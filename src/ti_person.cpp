@@ -176,7 +176,10 @@ constexpr bool _ti_state_handler_table_verified =
     _ti_verify_state_handler_table();
 
 namespace {
-
+const bn::array<bn::fixed_point, 5> LOCATIONS = {
+    bn::fixed_point(-60, 12), bn::fixed_point(-55, 15),
+    bn::fixed_point(-50, 18), bn::fixed_point(-45, 21),
+    bn::fixed_point(-40, 24)};
 int locate_in_queue(const bn::deque<int, 8>& order_queue, int id) {
   for (int i = 0; i < order_queue.size(); ++i) {
     if (order_queue.at(i) == id) return i;
@@ -189,12 +192,6 @@ int Person::_active_loiterers = 0;
 
 Person::Person(START start, TYPE type, int id)
     : _shadow(bn::sprite_items::shadow.create_sprite(0, 0)), _id(id) {
-  LOCATIONS.push_back(bn::fixed_point(-60, 12));
-  LOCATIONS.push_back(bn::fixed_point(-55, 15));
-  LOCATIONS.push_back(bn::fixed_point(-50, 18));
-  LOCATIONS.push_back(bn::fixed_point(-45, 21));
-  LOCATIONS.push_back(bn::fixed_point(-40, 24));
-
   bn::random rng = bn::random();
   for (int i = 0; i < _id; i++) {
     (void)rng.get();
