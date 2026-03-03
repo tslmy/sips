@@ -89,6 +89,7 @@ namespace ti {
 class Person {
  private:
   bool _focused = false;  // True if this customer is currently focused
+  bn::optional<bn::sprite_ptr> _cursor_sprite;  // Sprite for focus cursor
   bn::optional<bn::sprite_ptr> _sprite;
   bn::optional<bn::sprite_animate_action<8>> _action;
   bn::sprite_ptr _shadow;
@@ -183,7 +184,7 @@ class Person {
    * @brief Sets the focus state for this customer.
    * @param focused True to set as focused, false to unset.
    */
-  void set_focused(bool focused) { _focused = focused; }
+  void set_focused(bool focused);
   /**
    * @brief Constructs a Person with the given starting location, type, and
    * unique id.

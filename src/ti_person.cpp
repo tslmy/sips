@@ -20,6 +20,7 @@
 #include "bn_log.h"
 #include "bn_math.h"
 #include "bn_sprite_builder.h"
+#include "bn_sprite_items_cursor.h"
 #include "bn_sprite_items_shadow.h"
 #include "bn_sprite_items_walk1.h"
 #include "bn_sprite_items_walk10.h"
@@ -87,9 +88,27 @@ constexpr const bn::sprite_item* TYPE_TO_SPRITE[] = {
 }  // namespace
 
 // Focus flag methods
-bool Person::is_focused() const { return _focused; }
 
-void Person::set_focused(bool focused) { _focused = focused; }
+void Person::set_focused(bool focused) {
+  _focused = focused;
+  if (focused) {
+    if (!_cursor_sprite.has_value() && _sprite.has_value()) {
+      bn::fixed_point pos = _sprite.value().position();
+      pos.set_y(pos.y() - 16);  // Position cursor above customer
+      _cursor_sprite = bn::sprite_items::cursor.create_sprite(pos);
+      // Rotate 90deg clockwise
+      bn::sprite_affine_mat_ptr mat = bn::sprite_affine_mat_ptr::create();
+      mat.set_rotation_angle(90);
+      _cursor_sprite.value().set_affine_mat(mat);
+      _cursor_sprite.value().set_visible(true);
+    }
+  } else {
+    if (_cursor_sprite.has_value()) {
+      _cursor_sprite.value().set_visible(false);
+      _cursor_sprite.reset();
+    }
+  }
+}
 
 // This array must match the STATE enum order exactly.
 const Person::StateHandler Person::_state_handlers[] = {
@@ -573,6 +592,14 @@ void Person::update(bn::deque<int, 8>& order_queue, bool& waiting_spot,
 
   _shadow.set_x(_sprite.value().x());
   _shadow.set_y(_sprite.value().y() + 15);
+
+  // Update cursor sprite position if focused
+  if (_focused && _cursor_sprite.has_value() && _sprite.has_value()) {
+    bn::fixed_point pos = _sprite.value().position();
+    pos.set_y(pos.y() - 16);  // Position cursor above customer
+    _cursor_sprite.value().set_position(pos);
+    _cursor_sprite.value().set_visible(true);
+  }
 
   if (_action.has_value() && !_action.value().done()) {
     _action.value().update();
