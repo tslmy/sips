@@ -405,10 +405,53 @@ int main() {
         // Select first visible customer
         for (int i = 0; i < people.size(); i++) {
           if (popularity_level > i) {
-            // You may want to add more visibility logic here
             focused_person = &people.at(i);
             focused_person->set_focused(true);
             break;
+          }
+        }
+      }
+    }
+
+    // Handle L/R cycling when focused
+    if (focused_person && focused_person->is_focused()) {
+      int focused_index = -1;
+      for (int i = 0; i < people.size(); i++) {
+        if (&people.at(i) == focused_person) {
+          focused_index = i;
+          break;
+        }
+      }
+      // Find all visible customers
+      bn::vector<int, 16> visible_indices;
+      for (int i = 0; i < people.size(); i++) {
+        if (popularity_level > i) {
+          visible_indices.push_back(i);
+        }
+      }
+      if (!visible_indices.empty()) {
+        int current_visible = -1;
+        for (int i = 0; i < visible_indices.size(); i++) {
+          if (visible_indices.at(i) == focused_index) {
+            current_visible = i;
+            break;
+          }
+        }
+        // L cycles left, R cycles right
+        if (bn::keypad::l_pressed() && !bn::keypad::r_pressed()) {
+          int prev = (current_visible - 1 + visible_indices.size()) %
+                     visible_indices.size();
+          if (prev != current_visible) {
+            focused_person->set_focused(false);
+            focused_person = &people.at(visible_indices.at(prev));
+            focused_person->set_focused(true);
+          }
+        } else if (bn::keypad::r_pressed() && !bn::keypad::l_pressed()) {
+          int next = (current_visible + 1) % visible_indices.size();
+          if (next != current_visible) {
+            focused_person->set_focused(false);
+            focused_person = &people.at(visible_indices.at(next));
+            focused_person->set_focused(true);
           }
         }
       }
