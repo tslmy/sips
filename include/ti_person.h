@@ -126,62 +126,79 @@ class Person {
   bn::fixed_point _random_street_loiter_point();
   bn::fixed _randomized_street_y(bn::fixed base_y);
   bool _should_walk_by();
-  bool _update_loiter_overlay();
+  bool _update_loiter_overlay(const bn::vector<Person, 16> &people);
   using StateHandler = void (Person::*)(bn::deque<int, 8> &, bool &, bool &,
-                                        bn::vector<int, 16> &);
+                                        bn::vector<int, 16> &,
+                                        const bn::vector<Person, 16> &);
   static const StateHandler _state_handlers[];
   static int _state_index(STATE state);
   friend constexpr bool _ti_verify_state_handler_table();
-  bool _advance_to(const bn::fixed_point &target, bool may_loiter = false);
+  bool _advance_to(const bn::fixed_point &target, bool may_loiter,
+                   const bn::vector<Person, 16> &people);
   void _respawn_from_side(START start_side, STATE next_state, bool face_left,
                           bn::vector<int, 16> &types);
 
   void _handle_walking_left(bn::deque<int, 8> &order_queue, bool &waiting_spot,
                             bool &purchased_this_frame,
-                            bn::vector<int, 16> &types);
+                            bn::vector<int, 16> &types,
+                            const bn::vector<Person, 16> &people);
   void _handle_walking_left_with_coffee(bn::deque<int, 8> &order_queue,
                                         bool &waiting_spot,
                                         bool &purchased_this_frame,
-                                        bn::vector<int, 16> &types);
+                                        bn::vector<int, 16> &types,
+                                        const bn::vector<Person, 16> &people);
   void _handle_walking_right(bn::deque<int, 8> &order_queue, bool &waiting_spot,
                              bool &purchased_this_frame,
-                             bn::vector<int, 16> &types);
+                             bn::vector<int, 16> &types,
+                             const bn::vector<Person, 16> &people);
   void _handle_walking_right_with_coffee(bn::deque<int, 8> &order_queue,
                                          bool &waiting_spot,
                                          bool &purchased_this_frame,
-                                         bn::vector<int, 16> &types);
+                                         bn::vector<int, 16> &types,
+                                         const bn::vector<Person, 16> &people);
   void _handle_entering(bn::deque<int, 8> &order_queue, bool &waiting_spot,
-                        bool &purchased_this_frame, bn::vector<int, 16> &types);
+                        bool &purchased_this_frame, bn::vector<int, 16> &types,
+                        const bn::vector<Person, 16> &people);
   void _handle_walking_to_order(bn::deque<int, 8> &order_queue,
                                 bool &waiting_spot, bool &purchased_this_frame,
-                                bn::vector<int, 16> &types);
+                                bn::vector<int, 16> &types,
+                                const bn::vector<Person, 16> &people);
   void _handle_waiting_to_order(bn::deque<int, 8> &order_queue,
                                 bool &waiting_spot, bool &purchased_this_frame,
-                                bn::vector<int, 16> &types);
+                                bn::vector<int, 16> &types,
+                                const bn::vector<Person, 16> &people);
   void _handle_ordering(bn::deque<int, 8> &order_queue, bool &waiting_spot,
-                        bool &purchased_this_frame, bn::vector<int, 16> &types);
+                        bool &purchased_this_frame, bn::vector<int, 16> &types,
+                        const bn::vector<Person, 16> &people);
   void _handle_walking_to_counter(bn::deque<int, 8> &order_queue,
                                   bool &waiting_spot,
                                   bool &purchased_this_frame,
-                                  bn::vector<int, 16> &types);
+                                  bn::vector<int, 16> &types,
+                                  const bn::vector<Person, 16> &people);
   void _handle_waiting(bn::deque<int, 8> &order_queue, bool &waiting_spot,
-                       bool &purchased_this_frame, bn::vector<int, 16> &types);
+                       bool &purchased_this_frame, bn::vector<int, 16> &types,
+                       const bn::vector<Person, 16> &people);
   void _handle_walking_to_door(bn::deque<int, 8> &order_queue,
                                bool &waiting_spot, bool &purchased_this_frame,
-                               bn::vector<int, 16> &types);
+                               bn::vector<int, 16> &types,
+                               const bn::vector<Person, 16> &people);
   void _handle_exiting(bn::deque<int, 8> &order_queue, bool &waiting_spot,
-                       bool &purchased_this_frame, bn::vector<int, 16> &types);
+                       bool &purchased_this_frame, bn::vector<int, 16> &types,
+                       const bn::vector<Person, 16> &people);
   void _handle_joining_queue(bn::deque<int, 8> &order_queue, bool &waiting_spot,
                              bool &purchased_this_frame,
-                             bn::vector<int, 16> &types);
+                             bn::vector<int, 16> &types,
+                             const bn::vector<Person, 16> &people);
   void _handle_walking_left_passer(bn::deque<int, 8> &order_queue,
                                    bool &waiting_spot,
                                    bool &purchased_this_frame,
-                                   bn::vector<int, 16> &types);
+                                   bn::vector<int, 16> &types,
+                                   const bn::vector<Person, 16> &people);
   void _handle_walking_right_passer(bn::deque<int, 8> &order_queue,
                                     bool &waiting_spot,
                                     bool &purchased_this_frame,
-                                    bn::vector<int, 16> &types);
+                                    bn::vector<int, 16> &types,
+                                    const bn::vector<Person, 16> &people);
 
  public:
   /**
@@ -218,7 +235,8 @@ class Person {
    * @param types List of available style types for recycling when respawning
    */
   void update(bn::deque<int, 8> &order_queue, bool &waiting_spot,
-              bool &purchased_this_frame, bn::vector<int, 16> &types);
+              bool &purchased_this_frame, bn::vector<int, 16> &types,
+              const bn::vector<Person, 16> &people);
 
   int get_id() const;
   bn::fixed_point get_shadow_position() const;

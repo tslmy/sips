@@ -461,7 +461,7 @@ int main() {
     for (int i = 0; i < people.size(); i++) {
       if (popularity_level > i) {
         people.at(i).update(order_queue, waiting_spot, purchased_this_frame,
-                            available_types);
+                            available_types, people);
         // If we have a focused person pointer, check if it is still valid
         if (focused_person && (!focused_person->is_focused())) {
           focused_person = nullptr;

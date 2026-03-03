@@ -73,7 +73,7 @@ bn::fixed_point Person::get_shadow_position() const {
   return _shadow.position();
 }
 // Helper function to check if two shadows overlap (simple bounding box)
-static bool shadows_overlap(const bn::sprite_ptr& a, const bn::sprite_ptr& b) {
+static bool shadows_overlap(const bn::sprite_ptr &a, const bn::sprite_ptr &b) {
   bn::fixed_point apos = a.position();
   bn::fixed_point bpos = b.position();
   // Assuming shadow sprite is 16x8 px, adjust as needed
@@ -92,15 +92,14 @@ static bool shadows_overlap(const bn::sprite_ptr& a, const bn::sprite_ptr& b) {
 
 // Checks if moving to next_shadow_pos would collide with any other person's
 // shadow
-static bool shadow_would_collide(const bn::fixed_point& next_shadow_pos,
+static bool shadow_would_collide(const bn::fixed_point &next_shadow_pos,
                                  int self_id,
-                                 const bn::vector<Person*, 16>& people) {
+                                 const bn::vector<Person, 16> &people) {
   // Create a temp shadow sprite for collision check
   // (We only need position, not actual sprite)
-  for (const Person* other : people) {
-    if (!other) continue;
-    if (other->get_id() == self_id) continue;
-    bn::fixed_point other_pos = other->get_shadow_position();
+  for (const Person &other : people) {
+    if (other.get_id() == self_id) continue;
+    bn::fixed_point other_pos = other.get_shadow_position();
     // Simple bounding box check
     constexpr int SHADOW_W = 16;
     constexpr int SHADOW_H = 8;
@@ -120,7 +119,7 @@ static bool shadow_would_collide(const bn::fixed_point& next_shadow_pos,
 }
 
 namespace {
-constexpr const bn::sprite_item* TYPE_TO_SPRITE[] = {
+constexpr const bn::sprite_item *TYPE_TO_SPRITE[] = {
     &bn::sprite_items::walk1,   // GREEN_SHIRT = 0
     &bn::sprite_items::walk2,   // RED_SHIRT = 1
     &bn::sprite_items::walk3,   // BLUE_SHIRT = 2
@@ -139,7 +138,7 @@ constexpr const bn::sprite_item* TYPE_TO_SPRITE[] = {
 }  // namespace
 
 // Focus flag methods
-const char* ti::Person::state_to_string(STATE state) {
+const char *ti::Person::state_to_string(STATE state) {
   switch (state) {
     case STATE::WALKING_LEFT:
       return "Walking left";
@@ -215,6 +214,9 @@ const Person::StateHandler Person::_state_handlers[] = {
     &Person::_handle_walking_left_passer,
     &Person::_handle_walking_right_passer,
 };
+using StateHandler = void (Person::*)(bn::deque<int, 8> &, bool &, bool &,
+                                      bn::vector<int, 16> &,
+                                      const bn::vector<Person *, 16> &);
 
 constexpr bool _ti_verify_state_handler_table() {
   static_assert(
@@ -231,7 +233,7 @@ const bn::array<bn::fixed_point, 5> LOCATIONS = {
     bn::fixed_point(-60, 12), bn::fixed_point(-55, 15),
     bn::fixed_point(-50, 18), bn::fixed_point(-45, 21),
     bn::fixed_point(-40, 24)};
-int locate_in_queue(const bn::deque<int, 8>& order_queue, int id) {
+int locate_in_queue(const bn::deque<int, 8> &order_queue, int id) {
   for (int i = 0; i < order_queue.size(); ++i) {
     if (order_queue.at(i) == id) return i;
   }
@@ -412,7 +414,7 @@ void Person::_stop_loitering() {
       6, 7);
 }
 
-bool Person::_update_loiter_overlay() {
+bool Person::_update_loiter_overlay(const bn::vector<Person, 16> &people) {
   if (!_is_loitering) {
     return false;
   }
@@ -424,7 +426,7 @@ bool Person::_update_loiter_overlay() {
       _stop_loitering();
     }
   } else {
-    if (_advance_to(_loiter_target_position, false)) {
+    if (_advance_to(_loiter_target_position, false, people)) {
       _loiter_in_position = true;
       _action = bn::create_sprite_animate_action_forever(
           _sprite.value(), 20, _sprite_item.value().tiles_item(), 16, 16, 16,
@@ -434,17 +436,15 @@ bool Person::_update_loiter_overlay() {
   return _is_loitering;
 }
 
-bool Person::_advance_to(const bn::fixed_point& target, bool may_loiter) {
+bool Person::_advance_to(const bn::fixed_point &target, bool may_loiter,
+                         const bn::vector<Person, 16> &people) {
   bn::fixed_point next_step =
       ti::get_next_step(_sprite.value().position(), target, _speed);
-  // Calculate next shadow position
   bn::fixed_point next_shadow_pos = next_step;
   next_shadow_pos.set_y(next_shadow_pos.y() + 15);
-  // TODO: Access all people for collision check.
-  if (!shadow_would_collide(next_shadow_pos, _id, {})) {
+  if (!shadow_would_collide(next_shadow_pos, _id, people)) {
     _sprite.value().set_position(next_step);
   }
-  // else: do not move if collision would occur
   if (may_loiter && _try_start_loitering()) {
     return false;
   }
@@ -456,9 +456,10 @@ int Person::_state_index(STATE state) {
   return idx < 0 ? 0 : idx;
 }
 
-void Person::_handle_walking_right(bn::deque<int, 8>&, bool&, bool&,
-                                   bn::vector<int, 16>&) {
-  if (_advance_to(OUTSIDE, true)) {
+void Person::_handle_walking_right(bn::deque<int, 8> &, bool &, bool &,
+                                   bn::vector<int, 16> &,
+                                   const bn::vector<Person, 16> &people) {
+  if (_advance_to(OUTSIDE, true, people)) {
     if (_should_walk_by()) {
       _state = STATE::WALKING_RIGHT_PASSER;
       _sprite.value().set_horizontal_flip(false);
@@ -472,9 +473,10 @@ void Person::_handle_walking_right(bn::deque<int, 8>&, bool&, bool&,
   }
 }
 
-void Person::_handle_walking_left(bn::deque<int, 8>&, bool&, bool&,
-                                  bn::vector<int, 16>&) {
-  if (_advance_to(OUTSIDE, true)) {
+void Person::_handle_walking_left(bn::deque<int, 8> &, bool &, bool &,
+                                  bn::vector<int, 16> &,
+                                  const bn::vector<Person, 16> &people) {
+  if (_advance_to(OUTSIDE, true, people)) {
     if (_should_walk_by()) {
       _state = STATE::WALKING_LEFT_PASSER;
       _sprite.value().set_horizontal_flip(true);
@@ -488,25 +490,28 @@ void Person::_handle_walking_left(bn::deque<int, 8>&, bool&, bool&,
   }
 }
 
-void Person::_handle_entering(bn::deque<int, 8>&, bool&, bool&,
-                              bn::vector<int, 16>&) {
-  if (_advance_to(DOOR)) {
+void Person::_handle_entering(bn::deque<int, 8> &, bool &, bool &,
+                              bn::vector<int, 16> &,
+                              const bn::vector<Person, 16> &people) {
+  if (_advance_to(DOOR, false, people)) {
     _state = STATE::WALKING_TO_ORDER;
     _sprite.value().set_horizontal_flip(true);
   }
 }
 
-void Person::_handle_walking_to_order(bn::deque<int, 8>&, bool&, bool&,
-                                      bn::vector<int, 16>&) {
-  if (_advance_to(QUEUE_START)) {
+void Person::_handle_walking_to_order(bn::deque<int, 8> &, bool &, bool &,
+                                      bn::vector<int, 16> &,
+                                      const bn::vector<Person, 16> &people) {
+  if (_advance_to(QUEUE_START, false, people)) {
     _state = STATE::JOINING_QUEUE;
   }
 }
 
-void Person::_handle_joining_queue(bn::deque<int, 8>& order_queue,
-                                   bool& waiting_spot,
-                                   bool& purchased_this_frame,
-                                   bn::vector<int, 16>& types) {
+void Person::_handle_joining_queue(bn::deque<int, 8> &order_queue,
+                                   bool &waiting_spot,
+                                   bool &purchased_this_frame,
+                                   bn::vector<int, 16> &types,
+                                   const bn::vector<Person, 16> &people) {
   (void)waiting_spot;
   (void)purchased_this_frame;
   (void)types;
@@ -524,7 +529,7 @@ void Person::_handle_joining_queue(bn::deque<int, 8>& order_queue,
 
   bn::fixed_point target = index == -1 ? TILL : LOCATIONS.at(index);
 
-  if (_advance_to(target)) {
+  if (_advance_to(target, false, people)) {
     _state = STATE::WAITING_TO_ORDER;
     _action = bn::create_sprite_animate_action_forever(
         _sprite.value(), 20, _sprite_item.value().tiles_item(), 16, 16, 16, 16,
@@ -533,12 +538,13 @@ void Person::_handle_joining_queue(bn::deque<int, 8>& order_queue,
   }
 }
 
-void Person::_handle_waiting_to_order(bn::deque<int, 8>& order_queue, bool&,
-                                      bool&, bn::vector<int, 16>&) {
+void Person::_handle_waiting_to_order(bn::deque<int, 8> &order_queue, bool &,
+                                      bool &, bn::vector<int, 16> &,
+                                      const bn::vector<Person, 16> &people) {
   int index = locate_in_queue(order_queue, _id);
   const bn::fixed_point target = LOCATIONS.at(index);
 
-  if (_advance_to(target)) {
+  if (_advance_to(target, false, people)) {
     if (index == 0) {
       _state = STATE::ORDERING;
     }
@@ -552,9 +558,9 @@ void Person::_handle_waiting_to_order(bn::deque<int, 8>& order_queue, bool&,
   }
 }
 
-void Person::_handle_ordering(bn::deque<int, 8>& order_queue, bool&,
-                              bool& purchased_this_frame,
-                              bn::vector<int, 16>&) {
+void Person::_handle_ordering(bn::deque<int, 8> &order_queue, bool &,
+                              bool &purchased_this_frame, bn::vector<int, 16> &,
+                              const bn::vector<Person, 16> &people) {
   _wait_time += 1;
   if (_wait_time > _wait_max) {
     purchased_this_frame = true;
@@ -568,10 +574,11 @@ void Person::_handle_ordering(bn::deque<int, 8>& order_queue, bool&,
   }
 }
 
-void Person::_handle_walking_to_counter(bn::deque<int, 8>&, bool& waiting_spot,
-                                        bool&, bn::vector<int, 16>&) {
+void Person::_handle_walking_to_counter(bn::deque<int, 8> &, bool &waiting_spot,
+                                        bool &, bn::vector<int, 16> &,
+                                        const bn::vector<Person, 16> &people) {
   bn::fixed_point counter = waiting_spot ? COUNTER2 : COUNTER1;
-  if (_advance_to(counter)) {
+  if (_advance_to(counter, false, people)) {
     _state = STATE::WAITING;
     waiting_spot = !waiting_spot;
     _action = bn::create_sprite_animate_action_forever(
@@ -581,8 +588,9 @@ void Person::_handle_walking_to_counter(bn::deque<int, 8>&, bool& waiting_spot,
   }
 }
 
-void Person::_handle_waiting(bn::deque<int, 8>&, bool&, bool&,
-                             bn::vector<int, 16>&) {
+void Person::_handle_waiting(bn::deque<int, 8> &, bool &, bool &,
+                             bn::vector<int, 16> &,
+                             const bn::vector<Person, 16> &people) {
   _wait_time += 1;
   if (_wait_time > _wait_max + 60) {
     _wait_time = 0;
@@ -594,17 +602,19 @@ void Person::_handle_waiting(bn::deque<int, 8>&, bool&, bool&,
   }
 }
 
-void Person::_handle_walking_to_door(bn::deque<int, 8>&, bool&, bool&,
-                                     bn::vector<int, 16>&) {
-  if (_advance_to(DOOR)) {
+void Person::_handle_walking_to_door(bn::deque<int, 8> &, bool &, bool &,
+                                     bn::vector<int, 16> &,
+                                     const bn::vector<Person, 16> &people) {
+  if (_advance_to(DOOR, false, people)) {
     _state = STATE::EXITING;
     _sprite.value().set_horizontal_flip(false);
   }
 }
 
-void Person::_handle_exiting(bn::deque<int, 8>&, bool&, bool&,
-                             bn::vector<int, 16>&) {
-  if (_advance_to(OUTSIDE)) {
+void Person::_handle_exiting(bn::deque<int, 8> &, bool &, bool &,
+                             bn::vector<int, 16> &,
+                             const bn::vector<Person, 16> &people) {
+  if (_advance_to(OUTSIDE, false, people)) {
     bool is_left = _random.get_int(10) > 5;
     if (is_left) {
       _state = STATE::WALKING_LEFT_W_COFFEE;
@@ -617,38 +627,42 @@ void Person::_handle_exiting(bn::deque<int, 8>&, bool&, bool&,
   _sprite.value().set_z_order(-300);
 }
 
-void Person::_handle_walking_right_passer(bn::deque<int, 8>&, bool&, bool&,
-                                          bn::vector<int, 16>&) {
-  if (_advance_to(RIGHT, true)) {
+void Person::_handle_walking_right_passer(
+    bn::deque<int, 8> &, bool &, bool &, bn::vector<int, 16> &,
+    const bn::vector<Person, 16> &people) {
+  if (_advance_to(RIGHT, true, people)) {
     _state = STATE::WALKING_LEFT;
     _sprite.value().set_horizontal_flip(true);
   }
 }
 
-void Person::_handle_walking_left_passer(bn::deque<int, 8>&, bool&, bool&,
-                                         bn::vector<int, 16>&) {
-  if (_advance_to(LEFT, true)) {
+void Person::_handle_walking_left_passer(bn::deque<int, 8> &, bool &, bool &,
+                                         bn::vector<int, 16> &,
+                                         const bn::vector<Person, 16> &people) {
+  if (_advance_to(LEFT, true, people)) {
     _state = STATE::WALKING_RIGHT;
     _sprite.value().set_horizontal_flip(false);
   }
 }
 
-void Person::_handle_walking_left_with_coffee(bn::deque<int, 8>&, bool&, bool&,
-                                              bn::vector<int, 16>& types) {
-  if (_advance_to(LEFT, true)) {
+void Person::_handle_walking_left_with_coffee(
+    bn::deque<int, 8> &, bool &, bool &, bn::vector<int, 16> &types,
+    const bn::vector<Person, 16> &people) {
+  if (_advance_to(LEFT, true, people)) {
     _respawn_from_side(START::LEFT, STATE::WALKING_RIGHT, false, types);
   }
 }
 
-void Person::_handle_walking_right_with_coffee(bn::deque<int, 8>&, bool&, bool&,
-                                               bn::vector<int, 16>& types) {
-  if (_advance_to(RIGHT, true)) {
+void Person::_handle_walking_right_with_coffee(
+    bn::deque<int, 8> &, bool &, bool &, bn::vector<int, 16> &types,
+    const bn::vector<Person, 16> &people) {
+  if (_advance_to(RIGHT, true, people)) {
     _respawn_from_side(START::RIGHT, STATE::WALKING_LEFT, true, types);
   }
 }
 
 void Person::_respawn_from_side(START start_side, STATE next_state,
-                                bool face_left, bn::vector<int, 16>& types) {
+                                bool face_left, bn::vector<int, 16> &types) {
   if (types.empty()) {
     return;
   }
@@ -672,11 +686,13 @@ void Person::_respawn_from_side(START start_side, STATE next_state,
  * - purchased_this_frame: Set true if this customer buys during the update
  * - types: Pool of available style/type indices for respawning
  */
-void Person::update(bn::deque<int, 8>& order_queue, bool& waiting_spot,
-                    bool& purchased_this_frame, bn::vector<int, 16>& types) {
-  if (!_update_loiter_overlay()) {
+void Person::update(bn::deque<int, 8> &order_queue, bool &waiting_spot,
+                    bool &purchased_this_frame, bn::vector<int, 16> &types,
+                    const bn::vector<Person, 16> &people) {
+  if (!_update_loiter_overlay(people)) {
     const StateHandler handler = _state_handlers[_state_index(_state)];
-    (this->*handler)(order_queue, waiting_spot, purchased_this_frame, types);
+    (this->*handler)(order_queue, waiting_spot, purchased_this_frame, types,
+                     people);
   }
 
   _sprite.value().set_z_order(-_sprite.value().y().integer());
