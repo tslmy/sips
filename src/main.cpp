@@ -72,6 +72,32 @@ inline void update_if_running(Action &action) {
   }
 }
 
+ti::Person *find_next_person(const bn::vector<ti::Person, 16> &people,
+                             ti::Person *focused_person, bn::fixed current_x,
+                             bool going_left, int popularity_level) {
+  ti::Person *next_person = nullptr;
+  bn::fixed closest_x = going_left ? bn::fixed(-32767) : bn::fixed(32767);
+
+  for (int i = 0; i < people.size(); i++) {
+    if (popularity_level > i && people.at(i).is_visible() &&
+        &people.at(i) != focused_person) {
+      bn::fixed person_x = people.at(i).get_shadow_position().x();
+      if (going_left) {
+        if (person_x < current_x && person_x > closest_x) {
+          closest_x = person_x;
+          next_person = &people.at(i);
+        }
+      } else {
+        if (person_x > current_x && person_x < closest_x) {
+          closest_x = person_x;
+          next_person = &people.at(i);
+        }
+      }
+    }
+  }
+  return next_person;
+}
+
 void initialize_people(bn::vector<ti::Person, 16> &people) {
   people.clear();
   for (int i = 0; i < 10; ++i) {
@@ -421,26 +447,8 @@ int main() {
           (bn::keypad::r_pressed() && !bn::keypad::l_pressed())) {
         bool going_left = bn::keypad::l_pressed();
         bn::fixed current_x = focused_person->get_shadow_position().x();
-        ti::Person *next_person = nullptr;
-        bn::fixed closest_x = going_left ? bn::fixed(-32767) : bn::fixed(32767);
-
-        for (int i = 0; i < people.size(); i++) {
-          if (popularity_level > i && people.at(i).is_visible() &&
-              &people.at(i) != focused_person) {
-            bn::fixed person_x = people.at(i).get_shadow_position().x();
-            if (going_left) {
-              if (person_x < current_x && person_x > closest_x) {
-                closest_x = person_x;
-                next_person = &people.at(i);
-              }
-            } else {
-              if (person_x > current_x && person_x < closest_x) {
-                closest_x = person_x;
-                next_person = &people.at(i);
-              }
-            }
-          }
-        }
+        ti::Person *next_person = find_next_person(
+            people, focused_person, current_x, going_left, popularity_level);
 
         if (next_person) {
           focused_person->set_focused(false);
