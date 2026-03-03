@@ -394,6 +394,26 @@ int main() {
       typistAction.update();
     }
     rebuild_available_types(people, popularity_level, available_types);
+    // Handle L+R input for focus selection/deselection
+    bool lr_pressed = bn::keypad::l_pressed() && bn::keypad::r_pressed();
+    if (lr_pressed) {
+      if (focused_person && focused_person->is_focused()) {
+        // Deselect current focus
+        focused_person->set_focused(false);
+        focused_person = nullptr;
+      } else {
+        // Select first visible customer
+        for (int i = 0; i < people.size(); i++) {
+          if (popularity_level > i) {
+            // You may want to add more visibility logic here
+            focused_person = &people.at(i);
+            focused_person->set_focused(true);
+            break;
+          }
+        }
+      }
+    }
+
     for (int i = 0; i < people.size(); i++) {
       if (popularity_level > i) {
         people.at(i).update(order_queue, waiting_spot, purchased_this_frame,
