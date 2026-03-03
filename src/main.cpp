@@ -72,7 +72,7 @@ inline void update_if_running(Action &action) {
   }
 }
 
-ti::Person *find_next_person(const bn::vector<ti::Person, 16> &people,
+ti::Person *find_next_person(bn::vector<ti::Person, 16> &people,
                              ti::Person *focused_person, bn::fixed current_x,
                              bool going_left, int popularity_level) {
   ti::Person *next_person = nullptr;
