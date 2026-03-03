@@ -404,7 +404,7 @@ int main() {
       } else {
         // Select first visible customer
         for (int i = 0; i < people.size(); i++) {
-          if (popularity_level > i) {
+          if (popularity_level > i && people.at(i).is_visible()) {
             focused_person = &people.at(i);
             focused_person->set_focused(true);
             break;
@@ -425,7 +425,7 @@ int main() {
       // Find all visible customers
       bn::vector<int, 16> visible_indices;
       for (int i = 0; i < people.size(); i++) {
-        if (popularity_level > i) {
+        if (popularity_level > i && people.at(i).is_visible()) {
           visible_indices.push_back(i);
         }
       }

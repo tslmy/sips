@@ -1,3 +1,4 @@
+
 /**
  * @file ti_person.h
  * @brief Declares the Person class and types that control characters
@@ -77,7 +78,6 @@ enum class START { LEFT, RIGHT, COUNTER };
 }  // namespace ti
 
 namespace ti {
-
 /**
  * @class Person
  * @brief Models a customer character, handling movement, animation, queueing,
@@ -175,6 +175,10 @@ class Person {
                                     bn::vector<int, 16> &types);
 
  public:
+  /**
+   * @brief Returns true if the customer is visible on screen.
+   */
+  bool is_visible() const;
   /**
    * @brief Returns whether this customer is currently focused.
    */

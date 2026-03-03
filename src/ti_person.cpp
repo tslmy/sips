@@ -582,8 +582,7 @@ void Person::_respawn_from_side(START start_side, STATE next_state,
  * - types: Pool of available style/type indices for respawning
  */
 void Person::update(bn::deque<int, 8>& order_queue, bool& waiting_spot,
-                    bool& purchased_this_frame, bn::vector<int, 16>& types,
-                    int cursor_jump_offset) {
+                    bool& purchased_this_frame, bn::vector<int, 16>& types) {
   if (!_update_loiter_overlay()) {
     const StateHandler handler = _state_handlers[_state_index(_state)];
     (this->*handler)(order_queue, waiting_spot, purchased_this_frame, types);
@@ -605,5 +604,10 @@ void Person::update(bn::deque<int, 8>& order_queue, bool& waiting_spot,
   if (_action.has_value() && !_action.value().done()) {
     _action.value().update();
   }
+}
+
+bool Person::is_visible() const {
+  // Consider a person visible if their sprite exists and is visible
+  return _sprite.has_value() && _sprite.value().visible();
 }
 }  // namespace ti
