@@ -13,6 +13,10 @@ add_executable(test_helpers
     ../src/ti_helpers.cpp
 )
 
+add_executable(test_find_next_person
+    test_find_next_person.cpp
+)
+
 if(NOT APPLE)
     set(COVERAGE_GENERATED_HEADERS
         "${CMAKE_CURRENT_SOURCE_DIR}/../build/bn_regular_bg_items_overlay.h"
@@ -48,7 +52,13 @@ endif()
 
 target_link_libraries(test_helpers PRIVATE Catch2::Catch2WithMain)
 
+target_link_libraries(test_find_next_person PRIVATE Catch2::Catch2WithMain)
+
 target_compile_definitions(test_helpers PRIVATE
+    BN_CFG_ASSERT_ENABLED=false
+)
+
+target_compile_definitions(test_find_next_person PRIVATE
     BN_CFG_ASSERT_ENABLED=false
 )
 
@@ -71,6 +81,14 @@ target_include_directories(test_helpers PRIVATE
     ../external/butano/butano/include
 )
 
+target_include_directories(test_find_next_person PRIVATE 
+    ${Catch2_INCLUDE_DIRS}
+    ../include
+    ../build
+    ../src
+    ../external/butano/butano/include
+)
+
 if(TARGET coverage_objects)
     target_include_directories(coverage_objects PRIVATE
         ../include
@@ -81,3 +99,5 @@ if(TARGET coverage_objects)
 endif()
 
 add_test(NAME helpers COMMAND test_helpers)
+
+add_test(NAME find_next_person COMMAND test_find_next_person)

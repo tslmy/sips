@@ -32,30 +32,4 @@ void rebuild_available_types(const bn::vector<ti::Person, 16> &people,
   }
 }
 
-ti::Person *find_next_person(bn::vector<ti::Person, 16> &people,
-                             ti::Person *focused_person, bn::fixed current_x,
-                             bool going_left, int popularity_level) {
-  ti::Person *next_person = nullptr;
-  bn::fixed closest_x = going_left ? bn::fixed(-32767) : bn::fixed(32767);
-
-  for (int i = 0; i < people.size(); i++) {
-    if (popularity_level > i && people.at(i).is_visible() &&
-        &people.at(i) != focused_person) {
-      bn::fixed person_x = people.at(i).get_shadow_position().x();
-      if (going_left) {
-        if (person_x < current_x && person_x > closest_x) {
-          closest_x = person_x;
-          next_person = &people.at(i);
-        }
-      } else {
-        if (person_x > current_x && person_x < closest_x) {
-          closest_x = person_x;
-          next_person = &people.at(i);
-        }
-      }
-    }
-  }
-  return next_person;
-}
-
 }  // namespace people_manager
