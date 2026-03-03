@@ -460,8 +460,11 @@ int main() {
 
     for (int i = 0; i < people.size(); i++) {
       if (popularity_level > i) {
-        people.at(i).update(order_queue, waiting_spot, purchased_this_frame,
-                            available_types, people);
+        people.at(i).update(
+            order_queue, waiting_spot, purchased_this_frame, available_types,
+            // TODO: Collision avoidance may make people stuck. Pass `people`
+            // here when repulsion is properly implemented.
+            {});
         // If we have a focused person pointer, check if it is still valid
         if (focused_person && (!focused_person->is_focused())) {
           focused_person = nullptr;
