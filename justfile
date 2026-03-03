@@ -34,8 +34,8 @@ test-build:
     cmake --build build/RelWithDebInfo -j{{_jobs}}
 
 # Run tests with coverage
-[working-directory: "tests/build/RelWithDebInfo"]
 test: deps test-build
+    cd tests/build/RelWithDebInfo
     rm -f coverage.base.raw.info coverage.run.raw.info coverage.base.info coverage.run.info coverage.info
 
     # We capture a `coverage.base.raw.info` first to account for all code files. This report will say all files have 0% coverage.
