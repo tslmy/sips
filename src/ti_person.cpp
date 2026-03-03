@@ -101,8 +101,8 @@ static bool shadow_would_collide(const bn::fixed_point &next_shadow_pos,
     if (other.get_id() == self_id) continue;
     bn::fixed_point other_pos = other.get_shadow_position();
     // Simple bounding box check
-    constexpr int SHADOW_W = 10;
-    constexpr int SHADOW_H = 6;
+    constexpr int SHADOW_W = 16;
+    constexpr int SHADOW_H = 8;
     bn::fixed ax1 = next_shadow_pos.x() - SHADOW_W / 2;
     bn::fixed ay1 = next_shadow_pos.y() - SHADOW_H / 2;
     bn::fixed ax2 = next_shadow_pos.x() + SHADOW_W / 2;
@@ -438,70 +438,13 @@ bool Person::_update_loiter_overlay(const bn::vector<Person, 16> &people) {
 
 bool Person::_advance_to(const bn::fixed_point &target, bool may_loiter,
                          const bn::vector<Person, 16> &people) {
-  bn::fixed_point current = _sprite.value().position();
-  bn::fixed_point next_step = ti::get_next_step(current, target, _speed);
+  bn::fixed_point next_step =
+      ti::get_next_step(_sprite.value().position(), target, _speed);
   bn::fixed_point next_shadow_pos = next_step;
   next_shadow_pos.set_y(next_shadow_pos.y() + 15);
-
   if (!shadow_would_collide(next_shadow_pos, _id, people)) {
     _sprite.value().set_position(next_step);
-  } else {
-    // Repulsion: still advance in X toward the target, but nudge Y away from
-    // overlapping peers so colliding people can always escape their spawn
-    // point. Street Y bounds (sprite coords): spawn uses base 60 ±10 via
-    // _randomized_street_y, giving a valid street band of [50, 70].
-    constexpr bn::fixed STREET_Y_MIN = 50;
-    constexpr bn::fixed STREET_Y_MAX = 70;
-    constexpr int SHADOW_W = 4;
-    constexpr int SHADOW_H = 2;
-
-    bool is_street_state = _state == STATE::WALKING_LEFT ||
-                           _state == STATE::WALKING_RIGHT ||
-                           _state == STATE::WALKING_LEFT_W_COFFEE ||
-                           _state == STATE::WALKING_RIGHT_W_COFFEE ||
-                           _state == STATE::WALKING_LEFT_PASSER ||
-                           _state == STATE::WALKING_RIGHT_PASSER;
-
-    bn::fixed repel_x = 0;
-    bn::fixed repel_y = 0;
-    for (const Person &other : people) {
-      if (other.get_id() == _id || !other.is_visible() || repel_x != 0 ||
-          repel_y != 0)
-        continue;
-      bn::fixed_point other_shadow = other.get_shadow_position();
-      bn::fixed ax1 = next_shadow_pos.x() - SHADOW_W / 2;
-      bn::fixed ay1 = next_shadow_pos.y() - SHADOW_H / 2;
-      bn::fixed ax2 = next_shadow_pos.x() + SHADOW_W / 2;
-      bn::fixed ay2 = next_shadow_pos.y() + SHADOW_H / 2;
-      bn::fixed bx1 = other_shadow.x() - SHADOW_W / 2;
-      bn::fixed by1 = other_shadow.y() - SHADOW_H / 2;
-      bn::fixed bx2 = other_shadow.x() + SHADOW_W / 2;
-      bn::fixed by2 = other_shadow.y() + SHADOW_H / 2;
-      if (ax1 < bx2 && ax2 > bx1 && ay1 < by2 && ay2 > by1) {
-        // Repel in X: +1 if we are to the right of the other, -1 if to the
-        // left. Spreads people horizontally so they don't block the entire
-        // street band.
-        bn::fixed dx = next_shadow_pos.x() - other_shadow.x();
-        repel_x += (dx > 0) ? bn::fixed(1) : bn::fixed(-1);
-        // Repel in Y: +1 if we are below the other, -1 if above.
-        bn::fixed dy = next_shadow_pos.y() - other_shadow.y();
-        repel_y += (dy > 0) ? bn::fixed(1) : bn::fixed(-1);
-      }
-    }
-
-    bn::fixed new_x = current.x() + repel_x;
-    bn::fixed new_y = current.y() + repel_y;
-    if (is_street_state) {
-      // Keep repelled position inside the valid street walk band (Y only).
-      if (new_y < STREET_Y_MIN) new_y = STREET_Y_MIN;
-      if (new_y > STREET_Y_MAX) new_y = STREET_Y_MAX;
-      if (new_x < -160) new_x = -160;
-      if (new_x > 160) new_x = 160;
-    }
-    // Apply both X and Y repulsion to spread colliding people apart.
-    _sprite.value().set_position(bn::fixed_point(new_x, new_y));
   }
-
   if (may_loiter && _try_start_loitering()) {
     return false;
   }
