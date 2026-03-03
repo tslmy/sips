@@ -220,6 +220,8 @@ int main() {
   bool purchased_this_frame = false;
 
   bn::vector<ti::Person, 16> people;
+  // Pointer to the currently focused person (if any)
+  ti::Person *focused_person = nullptr;
   bn::vector<int, 16> available_types;
   initialize_people(people);
 
@@ -396,6 +398,10 @@ int main() {
       if (popularity_level > i) {
         people.at(i).update(order_queue, waiting_spot, purchased_this_frame,
                             available_types);
+        // If we have a focused person pointer, check if it is still valid
+        if (focused_person && (!focused_person->is_focused())) {
+          focused_person = nullptr;
+        }
       }
     }
     clockAction.update();
