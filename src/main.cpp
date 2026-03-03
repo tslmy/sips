@@ -416,44 +416,52 @@ int main() {
 
     // Handle L/R cycling when focused
     if (focused_person && focused_person->is_focused()) {
-      int focused_index = -1;
-      for (int i = 0; i < people.size(); i++) {
-        if (&people.at(i) == focused_person) {
-          focused_index = i;
-          break;
-        }
-      }
-      // Find all visible customers
-      bn::vector<int, 16> visible_indices;
-      for (int i = 0; i < people.size(); i++) {
-        if (popularity_level > i && people.at(i).is_visible()) {
-          visible_indices.push_back(i);
-        }
-      }
-      if (!visible_indices.empty()) {
-        int current_visible = -1;
-        for (int i = 0; i < visible_indices.size(); i++) {
-          if (visible_indices.at(i) == focused_index) {
-            current_visible = i;
-            break;
+      // L cycles left, R cycles right
+      if (bn::keypad::l_pressed() && !bn::keypad::r_pressed()) {
+        // Find person to the left with the closest x position
+        bn::fixed current_x = focused_person->get_shadow_position().x();
+        ti::Person *left_person = nullptr;
+        bn::fixed closest_x = bn::fixed(-32767);
+
+        for (int i = 0; i < people.size(); i++) {
+          if (popularity_level > i && people.at(i).is_visible() &&
+              &people.at(i) != focused_person) {
+            bn::fixed person_x = people.at(i).get_shadow_position().x();
+            // Find person with x < current_x that is closest to current_x
+            if (person_x < current_x && person_x > closest_x) {
+              closest_x = person_x;
+              left_person = &people.at(i);
+            }
           }
         }
-        // L cycles left, R cycles right
-        if (bn::keypad::l_pressed() && !bn::keypad::r_pressed()) {
-          int prev = (current_visible - 1 + visible_indices.size()) %
-                     visible_indices.size();
-          if (prev != current_visible) {
-            focused_person->set_focused(false);
-            focused_person = &people.at(visible_indices.at(prev));
-            focused_person->set_focused(true);
+
+        if (left_person) {
+          focused_person->set_focused(false);
+          focused_person = left_person;
+          focused_person->set_focused(true);
+        }
+      } else if (bn::keypad::r_pressed() && !bn::keypad::l_pressed()) {
+        // Find person to the right with the closest x position
+        bn::fixed current_x = focused_person->get_shadow_position().x();
+        ti::Person *right_person = nullptr;
+        bn::fixed closest_x = bn::fixed(32767);
+
+        for (int i = 0; i < people.size(); i++) {
+          if (popularity_level > i && people.at(i).is_visible() &&
+              &people.at(i) != focused_person) {
+            bn::fixed person_x = people.at(i).get_shadow_position().x();
+            // Find person with x > current_x that is closest to current_x
+            if (person_x > current_x && person_x < closest_x) {
+              closest_x = person_x;
+              right_person = &people.at(i);
+            }
           }
-        } else if (bn::keypad::r_pressed() && !bn::keypad::l_pressed()) {
-          int next = (current_visible + 1) % visible_indices.size();
-          if (next != current_visible) {
-            focused_person->set_focused(false);
-            focused_person = &people.at(visible_indices.at(next));
-            focused_person->set_focused(true);
-          }
+        }
+
+        if (right_person) {
+          focused_person->set_focused(false);
+          focused_person = right_person;
+          focused_person->set_focused(true);
         }
       }
     }
