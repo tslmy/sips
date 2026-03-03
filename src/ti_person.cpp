@@ -86,6 +86,11 @@ constexpr const bn::sprite_item* TYPE_TO_SPRITE[] = {
 };
 }  // namespace
 
+// Focus flag methods
+bool Person::is_focused() const { return _focused; }
+
+void Person::set_focused(bool focused) { _focused = focused; }
+
 // This array must match the STATE enum order exactly.
 const Person::StateHandler Person::_state_handlers[] = {
     &Person::_handle_walking_left,
