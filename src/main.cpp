@@ -49,7 +49,7 @@
 #include "bn_sprite_palette_ptr.h"
 #include "bn_sprite_text_generator.h"
 #include "bn_string.h"
-#include "people_manager.h"
+#include "people.h"
 #include "ti_font.h"
 #include "ti_person.h"
 #include "wishlist_data.h"
@@ -57,6 +57,16 @@
 #include "wishlist_menu.h"
 
 namespace {
+
+// Initialize people vector with 10 default customers.
+void initialize_people(bn::vector<ti::Person, 16> &people) {
+  people.clear();
+  for (int i = 0; i < 10; ++i) {
+    const ti::START start = i % 2 == 0 ? ti::START::RIGHT : ti::START::LEFT;
+    people.push_back(ti::Person(start, ti::TYPE::GREEN_SHIRT, i));
+  }
+}
+
 // Return true with probability numerator/denominator using provided RNG.
 // numerator: number of successful outcomes; denominator: total outcomes.
 inline bool chance(bn::random &rng, int numerator, int denominator = 100) {
@@ -197,7 +207,7 @@ int main() {
   // Pointer to the currently focused person (if any)
   ti::Person *focused_person = nullptr;
   bn::vector<int, 16> available_types;
-  people_manager::initialize_people(people);
+  initialize_people(people);
 
   bn::vector<bn::sprite_ptr, 8> focus_summary_sprites;
   while (true) {

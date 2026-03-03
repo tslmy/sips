@@ -44,6 +44,7 @@ test: deps test-build
     # Then we run the tests and capture `coverage.run.raw.info` to see what was actually executed. Since `./test_helpers` is built with only a subset of project files,
     # a lot of them will simply not appear in this report.
     ./test_helpers
+    ./test_people
     lcov --capture --directory . --output-file "coverage.run.raw.info" --ignore-errors inconsistent,source,format
     
     # Both `*.raw.info` files will include code from `external/` and `tests/`, 
