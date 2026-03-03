@@ -98,7 +98,7 @@ void Person::set_focused(bool focused) {
       _cursor_sprite = bn::sprite_items::cursor.create_sprite(pos);
       // Rotate 90deg clockwise
       bn::sprite_affine_mat_ptr mat = bn::sprite_affine_mat_ptr::create();
-      mat.set_rotation_angle(90);
+      mat.set_rotation_angle(360 - 90);
       _cursor_sprite.value().set_affine_mat(mat);
       _cursor_sprite.value().set_visible(true);
     }
@@ -582,7 +582,8 @@ void Person::_respawn_from_side(START start_side, STATE next_state,
  * - types: Pool of available style/type indices for respawning
  */
 void Person::update(bn::deque<int, 8>& order_queue, bool& waiting_spot,
-                    bool& purchased_this_frame, bn::vector<int, 16>& types) {
+                    bool& purchased_this_frame, bn::vector<int, 16>& types,
+                    int cursor_jump_offset) {
   if (!_update_loiter_overlay()) {
     const StateHandler handler = _state_handlers[_state_index(_state)];
     (this->*handler)(order_queue, waiting_spot, purchased_this_frame, types);
@@ -596,7 +597,7 @@ void Person::update(bn::deque<int, 8>& order_queue, bool& waiting_spot,
   // Update cursor sprite position if focused
   if (_focused && _cursor_sprite.has_value() && _sprite.has_value()) {
     bn::fixed_point pos = _sprite.value().position();
-    pos.set_y(pos.y() - 16);  // Position cursor above customer
+    pos.set_y(pos.y() - 24);  // Position cursor above customer, add jump
     _cursor_sprite.value().set_position(pos);
     _cursor_sprite.value().set_visible(true);
   }
