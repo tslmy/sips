@@ -87,6 +87,7 @@ namespace ti {
  * rendered to the screen with a sprite and shadow.
  */
 class Person {
+ public:
  private:
   bool _focused = false;  // True if this customer is currently focused
   bn::optional<bn::sprite_ptr> _cursor_sprite;  // Sprite for focus cursor
@@ -100,6 +101,14 @@ class Person {
   int _wait_max = 320;
   int _wait_time = 0;
   STATE _state = STATE::WAITING;
+  /**
+   * @brief Returns a string representation of the current state.
+   */
+ public:
+  /**
+   * @brief Returns a string representation of the current state.
+   */
+  static const char *state_to_string(STATE state);
   void setStyle(TYPE type, START start, bn::fixed_point pos);
   int _id;
   bool _has_loitered = false;
@@ -212,6 +221,10 @@ class Person {
               bool &purchased_this_frame, bn::vector<int, 16> &types);
 
   int get_id();
+  /**
+   * @brief Returns the current state of this person.
+   */
+  STATE get_state() const { return _state; }
   TYPE get_type() const;
   bn::fixed_point TILL = bn::fixed_point(-66, 14);
   bn::fixed_point COUNTER1 = bn::fixed_point(-100, 16);

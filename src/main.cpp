@@ -225,6 +225,7 @@ int main() {
   bn::vector<int, 16> available_types;
   initialize_people(people);
 
+  bn::vector<bn::sprite_ptr, 8> focus_summary_sprites;
   while (true) {
     wishlist_menu.update(purchased);
 
@@ -482,6 +483,17 @@ int main() {
       cash_sprite.set_visible(true);
       bn::sound_items::cash.play(0.8);
       purchased_this_frame = false;
+    }
+    // Render focused customer summary at bottom of screen
+    focus_summary_sprites.clear();
+    if (focused_person && focused_person->is_focused()) {
+      const char *state_str =
+          ti::Person::state_to_string(focused_person->get_state());
+      text_generator.set_left_alignment();
+      text_generator.set_palette_item(
+          bn::sprite_palette_items::white_text_palette);
+      text_generator.generate(-110, 68, bn::string<32>("State: ") + state_str,
+                              focus_summary_sprites);
     }
     bn::core::update();
     (void)rng.get();

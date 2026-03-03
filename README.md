@@ -14,6 +14,7 @@ Originally built by [Jono Shields](https://jonoshields.com/) over WinterJam23, t
   * If you attempt to buy something you can't afford, the cursor will shake and play a sound.
   * The cursor will now skip already-purchased items.
   * The menu now slides in & out from the top.
+  * Press L+R together to enter/exit "highlight" mode. A customer will be selected, and his/her current state will be printed at the bottom of the screen. Pressing L/R will cycle the cursor around all customer on screen.
 * NPC behavior
   * People may simply pass by, not coming in for a drink.
   * People may loiter on the street for a short while.

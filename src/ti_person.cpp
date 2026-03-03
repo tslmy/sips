@@ -88,6 +88,42 @@ constexpr const bn::sprite_item* TYPE_TO_SPRITE[] = {
 }  // namespace
 
 // Focus flag methods
+const char* ti::Person::state_to_string(STATE state) {
+  switch (state) {
+    case STATE::WALKING_LEFT:
+      return "Walking left";
+    case STATE::WALKING_LEFT_W_COFFEE:
+      return "Left w/coffee";
+    case STATE::WALKING_RIGHT:
+      return "Walking right";
+    case STATE::WALKING_RIGHT_W_COFFEE:
+      return "Right w/coffee";
+    case STATE::ENTERING:
+      return "Entering";
+    case STATE::WALKING_TO_ORDER:
+      return "To order";
+    case STATE::WAITING_TO_ORDER:
+      return "Waiting to order";
+    case STATE::ORDERING:
+      return "Ordering";
+    case STATE::WALKING_TO_COUNTER:
+      return "To counter";
+    case STATE::WAITING:
+      return "Waiting";
+    case STATE::WALKING_TO_DOOR:
+      return "To door";
+    case STATE::EXITING:
+      return "Exiting";
+    case STATE::JOINING_QUEUE:
+      return "Joining queue";
+    case STATE::WALKING_LEFT_PASSER:
+      return "Left passer";
+    case STATE::WALKING_RIGHT_PASSER:
+      return "Right passer";
+    default:
+      return "Unknown";
+  }
+}
 
 void Person::set_focused(bool focused) {
   _focused = focused;
